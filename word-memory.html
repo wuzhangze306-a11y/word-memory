@@ -1,0 +1,2545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1a0f2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="单词记忆">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect x='32' y='32' width='448' height='448' rx='100' fill='%231a0f2e'/><path d='M210 130 L350 160 L290 240 L170 210 Z' fill='%23b993ef'/><path d='M210 130 L170 210 L130 280 L160 180 Z' fill='%238d61c9'/><path d='M170 210 L290 240 L250 390 L130 280 Z' fill='%2359358c'/><path d='M290 240 L350 160 L400 300 L250 390 Z' fill='%23351e5e'/><path d='M350 160 L410 220 L400 300 Z' fill='%23492b7c'/></svg>">
+<title>单词记忆</title>
+<style>
+:root {
+    color-scheme: dark;
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2a2a2a;
+    --text: #f5f5f5;
+    --text2: #a0a0a0;
+    --text3: #6b6b6b;
+    --green: #4ade80;
+    --green-bg: rgba(74,222,128,0.12);
+    --red: #f87171;
+    --red-bg: rgba(248,113,113,0.12);
+    --blue: #60a5fa;
+    --blue-bg: rgba(96,165,250,0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --font: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans SC",sans-serif;
+    --font-en:"SF Pro Display","Inter",-apple-system,sans-serif;
+    --safe-bottom: env(safe-area-inset-bottom, 16px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+    font-family:var(--font);
+    background:var(--bg);
+    color:var(--text);
+    -webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none;user-select:none;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+}
+input,textarea{font-family:var(--font);color:var(--text);-webkit-user-select:text;user-select:text}
+.app{max-width:480px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding:0 16px;padding-bottom:calc(80px + var(--safe-bottom))}
+.page{display:none;flex:1;animation:fadeIn .25s ease}
+.page.active{display:block}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+
+/* nav */
+.nav{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+    max-width:480px;width:100%;
+    display:flex;justify-content:space-around;align-items:center;
+    background:rgba(15,15,15,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border-top:1px solid var(--border);
+    padding:8px 0 var(--safe-bottom);
+    z-index:100;
+}
+.nav-btn{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    background:none;border:none;color:var(--text3);font-size:10px;
+    padding:4px 8px;cursor:pointer;transition:color .2s;
+    -webkit-tap-highlight-color:transparent;
+}
+.nav-btn svg{width:18px;height:18px}
+.nav-btn.active{color:var(--text)}
+
+/* header */
+.header{padding:24px 0 8px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:18px;font-weight:600;letter-spacing:-0.3px}
+
+/* cards */
+.card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:20px;margin-bottom:12px;
+}
+.card-sm{padding:14px 16px}
+
+/* stats bar */
+.stats-bar{
+    display:flex;gap:12px;margin:12px 0 16px;
+}
+.stat-item{
+    flex:1;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:16px;text-align:center;
+}
+.stat-num{font-size:28px;font-weight:700;letter-spacing:-0.5px;font-variant-numeric:tabular-nums}
+.stat-label{font-size:12px;color:var(--text3);margin-top:4px}
+.stat-num.green{color:var(--green)}
+.stat-num.blue{color:var(--blue)}
+
+/* buttons */
+.btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    padding:12px 24px;border-radius:var(--radius-sm);border:none;
+    font-size:15px;font-weight:500;cursor:pointer;transition:all .15s;
+    -webkit-tap-highlight-color:transparent;
+    min-height:44px;
+}
+.btn:active{transform:scale(0.97)}
+.btn-primary{background:#fff;color:#000;width:100%}
+.btn-primary:active{background:#e0e0e0}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:active{background:var(--surface2)}
+.btn-danger{background:var(--red-bg);color:var(--red)}
+.btn-danger:active{background:rgba(248,113,113,0.25)}
+.btn-small{padding:8px 16px;font-size:13px;min-height:36px}
+
+/* word card */
+.word-card{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:40px 24px;min-height:320px;position:relative;
+}
+.word-en{
+    font-family:var(--font-en);
+    font-size:clamp(28px,8vw,42px);
+    font-weight:600;letter-spacing:-0.5px;
+    text-align:center;margin:16px 0;
+    transition:opacity .3s;
+}
+.word-zh{
+    font-size:18px;color:var(--text2);text-align:center;
+    margin:12px 0 24px;min-height:28px;
+    animation:slideUp .3s ease;
+}
+.word-speak{
+    position:absolute;top:12px;right:12px;
+    width:40px;height:40px;border-radius:50%;border:1px solid var(--border);
+    background:var(--surface2);color:var(--text2);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:18px;transition:all .15s;
+}
+.word-speak:active{background:var(--border);color:var(--text)}
+.reveal-area{margin-top:8px;min-height:120px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.answer-btns{display:flex;gap:12px;width:100%;max-width:280px}
+.answer-btn{
+    flex:1;padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border);
+    font-size:16px;font-weight:500;cursor:pointer;transition:all .15s;
+    min-height:52px;display:flex;align-items:center;justify-content:center;
+}
+.answer-btn:active{transform:scale(0.96)}
+.answer-btn.wrong{background:var(--red-bg);color:var(--red);border-color:transparent}
+.answer-btn.wrong:active{background:rgba(248,113,113,0.25)}
+.answer-btn.correct{background:var(--green-bg);color:var(--green);border-color:transparent}
+.answer-btn.correct:active{background:rgba(74,222,128,0.25)}
+/* progress dots */
+.progress-dots{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:24px;padding:0 8px;max-height:80px;overflow-y:auto}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);transition:all .3s;flex-shrink:0}
+.dot.active{width:10px;height:10px;background:var(--text);box-shadow:0 0 8px rgba(255,255,255,0.3);margin-top:-1px}
+.dot.correct{background:var(--green);box-shadow:0 0 4px rgba(74,222,128,0.5)}
+.dot.wrong{background:var(--red);box-shadow:0 0 4px rgba(248,113,113,0.5)}
+/* card animations */
+.word-card{transition:box-shadow .3s,transform .2s}
+.word-card.flash-green{box-shadow:0 0 40px rgba(74,222,128,0.25),inset 0 0 40px rgba(74,222,128,0.06)}
+.word-card.shake{animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+/* streak badge */
+.streak-badge{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text2);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:4px 12px}
+.streak-fire{font-size:16px;line-height:1}
+/* reference word list */
+.ref-group{margin-bottom:16px}
+.ref-group-header{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:8px}
+.ref-letter{font-size:16px;font-weight:600;color:var(--text)}
+.ref-count{font-size:12px;color:var(--text3)}
+.ref-subsection{margin-bottom:8px}
+.ref-subtitle{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 4px}
+.ref-word{display:flex;align-items:center;gap:10px;padding:6px 4px;font-size:13px;border-radius:4px}
+.ref-word .ref-en{font-family:var(--font-en);color:var(--text);min-width:100px}
+.ref-word .ref-zh{color:var(--text2)}
+.ref-word .ref-check{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px}
+.ref-word.checked .ref-check{background:var(--green);color:#0f0f0f}
+.ref-word.unchecked .ref-check{border:1px solid var(--border)}
+.ref-import-area{width:100%;min-height:120px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:13px;color:var(--text);resize:vertical;line-height:1.6}
+.ref-import-area:focus{outline:none;border-color:var(--blue)}
+
+/* countdown */
+.countdown-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.countdown-item{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:14px 16px;
+    cursor:pointer;transition:border-color .15s;
+}
+.countdown-item:active{border-color:var(--text3)}
+.countdown-days{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;min-width:50px;text-align:right}
+.countdown-name{font-size:14px;color:var(--text2)}
+.countdown-date{font-size:11px;color:var(--text3);margin-top:2px}
+.countdown-add{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    padding:14px;border:1px dashed var(--border);border-radius:var(--radius);
+    color:var(--text3);font-size:14px;cursor:pointer;transition:all .15s;
+}
+.countdown-add:active{color:var(--text2);border-color:var(--text2)}
+
+/* wrong list */
+.wrong-item{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 16px;border-bottom:1px solid var(--border);
+}
+.wrong-en{font-family:var(--font-en);font-size:16px;font-weight:500}
+.wrong-zh{font-size:13px;color:var(--text3);margin-top:2px}
+.wrong-count{
+    font-size:12px;color:var(--red);background:var(--red-bg);
+    padding:3px 10px;border-radius:10px;font-weight:500
+}
+.wrong-count.zero{color:var(--text3);background:var(--surface2)} /* not used, kept for ref */
+
+/* stats */
+.stat-table{width:100%;border-collapse:collapse}
+.stat-table th,.stat-table td{padding:10px 12px;text-align:center;font-size:13px}
+.stat-table th{color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase}
+.stat-table td{border-bottom:1px solid var(--border)}
+.stat-table tr:last-child td{border-bottom:none}
+
+/* import */
+.import-area{width:100%;min-height:200px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-size:14px;color:var(--text);resize:vertical;line-height:1.6}
+.import-area:focus{outline:none;border-color:var(--blue)}
+.import-preview{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:16px;margin:12px 0;
+    max-height:200px;overflow-y:auto;font-size:13px;
+}
+.import-preview .word-row{display:flex;gap:12px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.import-preview .w-en{color:var(--text);font-family:var(--font-en);min-width:100px}
+.import-preview .w-zh{color:var(--text2)}
+
+/* modal */
+.modal-overlay{
+    display:none;position:fixed;inset:0;z-index:200;
+    background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);
+    align-items:center;justify-content:center;
+}
+.modal-overlay.show{display:flex}
+.modal{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:24px;width:calc(100% - 48px);
+    max-width:400px;animation:scaleIn .2s ease;
+}
+.modal h2{font-size:17px;font-weight:600;margin-bottom:12px}
+.modal p{font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.5}
+.modal .actions{display:flex;flex-direction:column;gap:8px}
+.modal input[type="text"],.modal input[type="date"]{
+    width:100%;padding:12px;background:var(--bg);border:1px solid var(--border);
+    border-radius:var(--radius-sm);font-size:14px;margin-bottom:12px;
+}
+.modal input:focus{outline:none;border-color:var(--blue)}
+.modal .row{display:flex;gap:8px}
+.modal .row .btn{flex:1}
+
+/* empty */
+.empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty svg{margin-bottom:16px;opacity:0.4}
+.empty p{font-size:14px;line-height:1.6}
+
+/* misc */
+.section-title{font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin:20px 0 10px}
+.inline-link{color:var(--blue);cursor:pointer;font-size:14px}
+.inline-link:active{opacity:0.7}
+.flex-between{display:flex;align-items:center;justify-content:space-between}
+.text-secondary{color:var(--text2);font-size:14px}
+.text-tertiary{color:var(--text3);font-size:12px}
+.mt-sm{margin-top:8px}
+.mt-md{margin-top:16px}
+.mt-lg{margin-top:24px}
+.mb-sm{margin-bottom:8px}
+.mb-md{margin-bottom:16px}
+.gap-sm{display:flex;flex-direction:column;gap:8px}
+.gap-md{display:flex;flex-direction:column;gap:12px}
+.row-gap{display:flex;gap:8px}
+</style>
+</head>
+<body>
+
+<div id="app" class="app">
+
+<!-- ========== 主页 ========== -->
+<div id="page-home" class="page active">
+    <div class="header"><h1>单词记忆</h1><span class="streak-badge" id="streak-badge"></span></div>
+
+    <!-- 今日进度 -->
+    <div class="stats-bar" id="today-stats">
+        <div class="stat-item">
+            <div class="stat-num blue" id="stat-tested">0</div>
+            <div class="stat-label">今日已测</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num green" id="stat-rate">--%</div>
+            <div class="stat-label">正确率</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num" id="stat-wrong"></div>
+            <div class="stat-label">错词数</div>
+        </div>
+    </div>
+
+    <!-- 倒数日 -->
+    <div class="section-title">倒数日</div>
+    <div class="countdown-list" id="countdown-list"></div>
+    <div class="countdown-add" id="btn-add-countdown">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
+        添加倒数日
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="gap-sm mt-lg">
+        <button class="btn btn-primary" id="btn-start-study">开始学习</button>
+        <button class="btn btn-ghost" id="btn-wrong-review" style="width:100%">专项复习错词</button>
+    </div>
+    <div class="text-tertiary mt-sm" style="text-align:center" id="word-count-info"></div>
+</div>
+
+<!-- ========== 学习页 ========== -->
+<div id="page-study" class="page">
+    <div class="header">
+        <button class="btn btn-ghost btn-small" id="btn-study-back">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3L5 8l5 5"/></svg>
+            返回
+        </button>
+        <span class="text-secondary" id="study-mode-label">学习</span>
+        <span style="width:50px"></span>
+    </div>
+    <div class="card word-card" id="word-card">
+        <button class="word-speak" id="btn-speak" title="朗读">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>
+            </svg>
+        </button>
+        <div class="word-en" id="word-en"></div>
+        <div class="reveal-area" id="reveal-area">
+            <div class="word-zh" id="word-zh" style="visibility:hidden"></div>
+            <button class="btn btn-ghost" id="btn-reveal">显示释义</button>
+            <div class="answer-btns" id="answer-btns" style="display:none">
+                <button class="answer-btn wrong" id="btn-wrong">✗</button>
+                <button class="answer-btn correct" id="btn-correct">✓</button>
+            </div>
+        </div>
+        <div class="progress-dots" id="progress-dots"></div>
+    </div>
+    <p class="text-tertiary" style="text-align:center" id="progress-text"></p>
+</div>
+
+<!-- ========== 错词本 ========== -->
+<div id="page-wrong" class="page">
+    <div class="header"><h1>错词本</h1></div>
+    <div id="wrong-list"></div>
+    <div id="wrong-empty" class="empty" style="display:none">
+        <p>暂无错词<br>继续加油</p>
+    </div>
+    <button class="btn btn-primary mt-lg" id="btn-wrong-review2" style="display:none">专项复习错词</button>
+</div>
+
+<!-- ========== 统计页 ========== -->
+<div id="page-stats" class="page">
+    <div class="header"><h1>学习统计</h1></div>
+    <div class="card card-sm">
+        <table class="stat-table">
+            <thead><tr><th>日期</th><th>已测</th><th>正确</th><th>正确率</th></tr></thead>
+            <tbody id="stats-body"><tr><td colspan="4" class="text-tertiary">暂无记录</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ========== 参考词库页 ========== -->
+<div id="page-ref" class="page">
+    <div class="header"><h1>参考词库</h1><span class="text-secondary" id="ref-coverage"></span></div>
+    <p class="text-secondary mb-sm">母版词库对照表，A 库已收录的会自动勾选。<button class="inline-link" id="btn-ref-import-toggle">导入词库</button></p>
+    <div id="ref-import-block" style="display:none">
+        <textarea class="ref-import-area" id="ref-import-text" placeholder="粘贴母版词库，每行"英文 中文"（空格分隔）"></textarea>
+        <div class="row-gap mt-sm">
+            <button class="btn btn-primary btn-small" id="btn-ref-parse" style="flex:1">解析导入</button>
+            <button class="btn btn-ghost btn-small" id="btn-ref-replace">替换现有</button>
+            <button class="btn btn-ghost btn-small" id="btn-ref-clear">清空</button>
+        </div>
+    </div>
+    <div id="ref-list" class="mt-md"></div>
+    <div id="ref-empty" class="empty" style="display:none"><p>尚未导入参考词库</p></div>
+</div>
+
+<!-- ========== 导入页 ========== -->
+<div id="page-import" class="page">
+    <div class="header"><h1>导入单词</h1></div>
+    <p class="text-secondary mb-sm">粘贴文本，每行一条"英文 中文"（空格分隔），一行可包含多组。</p>
+    <textarea class="import-area" id="import-text" placeholder="例：&#10;reputation 名声 diagram 图表 poet 诗人&#10;navy 海军，深蓝色的"></textarea>
+    <div class="row-gap mt-sm">
+        <button class="btn btn-primary" id="btn-parse" style="flex:1">解析预览</button>
+        <button class="btn btn-ghost btn-small" id="btn-load-demo">加载示例</button>
+    </div>
+    <div class="import-preview" id="import-preview" style="display:none">
+        <div class="flex-between mb-sm">
+            <span class="text-secondary" id="import-count"></span>
+            <span class="inline-link" id="btn-clear-preview">清除</span>
+        </div>
+        <div id="import-words"></div>
+    </div>
+    <button class="btn btn-primary mt-sm" id="btn-import-confirm" style="display:none">确认导入</button>
+</div>
+
+<!-- ========== 底部导航 ========== -->
+<nav class="nav">
+    <button class="nav-btn active" data-page="home">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8l7-5 7 5v9a1 1 0 01-1 1H4a1 1 0 01-1-1V8z"/></svg>
+        首页
+    </button>
+    <button class="nav-btn" data-page="study">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="2" width="14" height="16" rx="2"/><path d="M8 7h4M8 10h4M8 13h3"/></svg>
+        学习
+    </button>
+    <button class="nav-btn" data-page="wrong">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 5l10 10M15 5L5 15"/><circle cx="10" cy="10" r="8"/></svg>
+        错词本
+    </button>
+    <button class="nav-btn" data-page="stats">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="12" width="4" height="6" rx="1"/><rect x="8" y="7" width="4" height="11" rx="1"/><rect x="14" y="2" width="4" height="16" rx="1"/></svg>
+        统计
+    </button>
+    <button class="nav-btn" data-page="import">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3v10M7 9l3 3 3-3M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg>
+        导入
+    </button>
+    <button class="nav-btn" data-page="ref">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="2.5"/><circle cx="13" cy="13" r="2.5"/><path d="M9 9l3 3"/><path d="M3 3h2v2H3zM15 15h2v2h-2z"/></svg>
+        词库
+    </button>
+</nav>
+
+<!-- ========== 启动弹窗 ========== -->
+<div class="modal-overlay" id="modal-start">
+    <div class="modal">
+        <h2>欢迎回来</h2>
+        <p>检测到上次学习进度，要继续吗？</p>
+        <div class="actions">
+            <button class="btn btn-primary" id="btn-continue">继续上次进度</button>
+            <button class="btn btn-ghost" id="btn-restart">重新开始（重新打乱）</button>
+        </div>
+    </div>
+</div>
+
+<!-- 完成弹窗 -->
+<div class="modal-overlay" id="modal-complete">
+    <div class="modal" style="text-align:center">
+        <h2 id="complete-title">本轮完成</h2>
+        <div class="stats-bar" style="margin:16px 0">
+            <div class="stat-item"><div class="stat-num" id="complete-tested">0</div><div class="stat-label">本轮测试</div></div>
+            <div class="stat-item"><div class="stat-num green" id="complete-rate">0%</div><div class="stat-label">正确率</div></div>
+        </div>
+        <p class="text-secondary" id="complete-detail" style="margin-bottom:20px"></p>
+        <div class="actions gap-sm">
+            <button class="btn btn-primary" id="btn-complete-restart">再来一轮</button>
+            <button class="btn btn-ghost" id="btn-complete-wrong">复习错词</button>
+            <button class="btn btn-ghost btn-small" id="btn-complete-home">返回首页</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 倒数日编辑弹窗 ========== -->
+<div class="modal-overlay" id="modal-countdown">
+    <div class="modal">
+        <h2 id="modal-countdown-title">添加倒数日</h2>
+        <input type="text" id="cd-name" placeholder="事件名称，如：高考">
+        <input type="date" id="cd-date">
+        <div class="actions row-gap">
+            <button class="btn btn-primary" id="btn-cd-save">保存</button>
+            <button class="btn btn-danger btn-small" id="btn-cd-delete" style="display:none">删除此倒数日</button>
+            <button class="btn btn-ghost btn-small" id="btn-cd-cancel">取消</button>
+        </div>
+    </div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+// ==================== 内置词库 ====================
+const BUILTIN_WORDS = [
+    {en:"absence",zh:"缺乏，缺席"},
+    {en:"abundant",zh:"丰富的，充裕的"},
+    {en:"abuse",zh:"滥用"},
+    {en:"academic",zh:"学术的，高校科研人员"},
+    {en:"academy",zh:"研究院，学校"},
+    {en:"accelerate",zh:"加快，加速"},
+    {en:"accessible",zh:"可到达的"},
+    {en:"accessory",zh:"配件，附属的"},
+    {en:"accommodate",zh:"住宿，容纳"},
+    {en:"accommodation",zh:"住处"},
+    {en:"accomplish",zh:"完成"},
+    {en:"accord",zh:"符合，一致"},
+    {en:"accountancy",zh:"会计工作"},
+    {en:"accumulate",zh:"积累"},
+    {en:"accuse",zh:"控告，指控"},
+    {en:"accustomed",zh:"习惯的，通常的"},
+    {en:"acid",zh:"酸，酸性的"},
+    {en:"acknowledge",zh:"承认"},
+    {en:"active",zh:"积极的，主动的"},
+    {en:"adapt",zh:"适应"},
+    {en:"addicted",zh:"沉迷的"},
+    {en:"addiction",zh:"嗜好"},
+    {en:"adequate",zh:"足够的"},
+    {en:"adjective",zh:"形容词的， 从属的"},
+    {en:"adjustment",zh:"调整"},
+    {en:"administration",zh:"管理"},
+    {en:"adopt",zh:"采取"},
+    {en:"aero",zh:"航空的,飞行的"},
+    {en:"affect",zh:"影响"},
+    {en:"afterwards",zh:"以后，后来"},
+    {en:"agency",zh:"代理机构"},
+    {en:"aid",zh:"帮助"},
+    {en:"aircraft",zh:"飞机"},
+    {en:"airplane",zh:"飞机"},
+    {en:"alert",zh:"警报"},
+    {en:"alongside",zh:"与…一起， 与…同时"},
+    {en:"alter",zh:"使改变，更改"},
+    {en:"altogether",zh:"完全"},
+    {en:"amount",zh:"数量，总数"},
+    {en:"ampere",zh:"安培（电流强度的单位）"},
+    {en:"analyse",zh:"分析"},
+    {en:"analytical",zh:"分析的"},
+    {en:"ancient",zh:"古代的"},
+    {en:"ankle",zh:"踝关节"},
+    {en:"announcer",zh:"广播员，宣告者"},
+    {en:"annoy",zh:"骚扰，打搅"},
+    {en:"anxious",zh:"焦虑的，担忧的"},
+    {en:"apart",zh:"相隔"},
+    {en:"apartment",zh:"公寓"},
+    {en:"apologize",zh:"道歉"},
+    {en:"apology",zh:"道歉"},
+    {en:"appeal",zh:"有吸引力"},
+    {en:"appetite",zh:"食欲"},
+    {en:"appliance",zh:"电器"},
+    {en:"applicant",zh:"申请人"},
+    {en:"application",zh:"应用，申请"},
+    {en:"apply",zh:"申请，应用"},
+    {en:"appointment",zh:"约会"},
+    {en:"appreciate",zh:"欣赏"},
+    {en:"approve",zh:"批准，赞成"},
+    {en:"approximate",zh:"近似的，大概的"},
+    {en:"approximately",zh:"大约，近似地"},
+    {en:"architect",zh:"建筑师"},
+    {en:"architecture",zh:"建筑学"},
+    {en:"argue",zh:"争吵，争论"},
+    {en:"argument",zh:"争吵"},
+    {en:"arrange",zh:"安排"},
+    {en:"artificial",zh:"人造的"},
+    {en:"aspect",zh:"方面"},
+    {en:"assemble",zh:"集合"},
+    {en:"assembly",zh:"组装"},
+    {en:"assess",zh:"评价"},
+    {en:"assessment",zh:"看法"},
+    {en:"asset",zh:"资产"},
+    {en:"assign",zh:"分配，指派"},
+    {en:"assignment",zh:"任务，工作"},
+    {en:"assist",zh:"帮助"},
+    {en:"assistant",zh:"助手，助理"},
+    {en:"assume",zh:"假定"},
+    {en:"assumption",zh:"假设"},
+    {en:"astonish",zh:"使十分惊讶"},
+    {en:"athlete",zh:"运动员"},
+    {en:"atmosphere",zh:"气氛"},
+    {en:"attach",zh:"重视，把… 固定"},
+    {en:"attack",zh:"发作，侵袭"},
+    {en:"attempt",zh:"尝试"},
+    {en:"attribute",zh:"属性"},
+    {en:"authority",zh:"权力"},
+    {en:"automate",zh:"使自动化"},
+    {en:"auxiliary",zh:"辅助的"},
+    {en:"available",zh:"可获得的， 可购得的"},
+    {en:"average",zh:"平均的，一般的"},
+    {en:"aviation",zh:"航空"},
+    {en:"awareness",zh:"知道"},
+    {en:"bachelor",zh:"学士"},
+    {en:"bacon",zh:"熏肉，咸猪肉"},
+    {en:"bakery",zh:"面包店"},
+    {en:"bankrupt",zh:"破产的"},
+    {en:"barber",zh:"理发师"},
+    {en:"barely",zh:"几乎不"},
+    {en:"bark",zh:"树皮，狗叫"},
+    {en:"barn",zh:"谷仓"},
+    {en:"barrier",zh:"障碍物，屏障"},
+    {en:"base",zh:"根基，以… 为基础"},
+    {en:"basin",zh:"水池，盆地"},
+    {en:"bathe",zh:"沐浴"},
+    {en:"beauty",zh:"美丽"},
+    {en:"beg",zh:"乞讨"},
+    {en:"being",zh:"存在，生物"},
+    {en:"belong",zh:"属于"},
+    {en:"beloved",zh:"心爱的，挚爱的"},
+    {en:"billion",zh:"十亿，大量"},
+    {en:"biological",zh:"生物的"},
+    {en:"blade",zh:"叶片，刀片"},
+    {en:"blame",zh:"责任"},
+    {en:"blank",zh:"空白的，空白处"},
+    {en:"blanket",zh:"毛毯"},
+    {en:"bloom",zh:"花，青春"},
+    {en:"boil",zh:"沸点,沸腾"},
+    {en:"bond",zh:"债券，纽带，结合"},
+    {en:"bone",zh:"骨头"},
+    {en:"bonus",zh:"奖金"},
+    {en:"boom",zh:"繁荣，激增"},
+    {en:"boot",zh:"靴子"},
+    {en:"booth",zh:"货摊，公用电话亭"},
+    {en:"border",zh:"国界"},
+    {en:"bound",zh:"一定会，很可能会"},
+    {en:"boundary",zh:"边界，界限"},
+    {en:"bow",zh:"弓，鞠躬"},
+    {en:"brain",zh:"头脑，智力"},
+    {en:"brake",zh:"刹车，车闸"},
+    {en:"brand",zh:"品牌"},
+    {en:"breed",zh:"孕育"},
+    {en:"brick",zh:"砖块"},
+    {en:"bride",zh:"新娘"},
+    {en:"brilliant",zh:"聪颖的，出色的"},
+    {en:"brook",zh:"小溪"},
+    {en:"bucket",zh:"桶，水桶"},
+    {en:"bump",zh:"碰上"},
+    {en:"bundle",zh:"束，捆"},
+    {en:"burden",zh:"担负"},
+    {en:"burst",zh:"爆发"},
+    {en:"bush",zh:"灌木"},
+    {en:"bypass",zh:"绕过"},
+    {en:"cafeteria",zh:"自助餐厅"},
+    {en:"calendar",zh:"日历"},
+    {en:"calm",zh:"平静的"},
+    {en:"campaign",zh:"运动"},
+    {en:"cancer",zh:"癌症"},
+    {en:"candidate",zh:"候选人"},
+    {en:"canteen",zh:"食堂，小卖部"},
+    {en:"cap",zh:"帽子"},
+    {en:"capacity",zh:"能力"},
+    {en:"cart",zh:"手推车"},
+    {en:"case",zh:"调查的案件，情况"},
+    {en:"cash",zh:"现金"},
+    {en:"cassette",zh:"卡带，盒式磁带"},
+    {en:"category",zh:"类别，种类"},
+    {en:"cathedral",zh:"大教堂"},
+    {en:"cautious",zh:"小心的"},
+    {en:"ceiling",zh:"天花板，上限"},
+    {en:"celebration",zh:"庆典"},
+    {en:"cell",zh:"细胞"},
+    {en:"cellar",zh:"地窖"},
+    {en:"cement",zh:"水泥,接合剂"},
+    {en:"centre",zh:"中心"},
+    {en:"cereal",zh:"谷物"},
+    {en:"certain",zh:"必然的，某些"},
+    {en:"certificate",zh:"证书，文凭"},
+    {en:"chain",zh:"连锁商店"},
+    {en:"channel",zh:"途径，渠道"},
+    {en:"chapter",zh:"篇"},
+    {en:"characteristic",zh:"特有的，特征"},
+    {en:"characterize",zh:"描述"},
+    {en:"charity",zh:"慈善"},
+    {en:"chef",zh:"厨师"},
+    {en:"chemical",zh:"化学物"},
+    {en:"chicken",zh:"鸡肉"},
+    {en:"choke",zh:"窒息，哽咽"},
+    {en:"church",zh:"教堂"},
+    {en:"cigarette",zh:"香烟"},
+    {en:"circulate",zh:"传播，循环"},
+    {en:"circumstance",zh:"环境"},
+    {en:"cite",zh:"提及"},
+    {en:"citizen",zh:"公民"},
+    {en:"civilisation",zh:"文明"},
+    {en:"claim",zh:"宣称，声称"},
+    {en:"claw",zh:"爪"},
+    {en:"clerk",zh:"职员"},
+    {en:"client",zh:"委托人"},
+    {en:"cliff",zh:"悬崖"},
+    {en:"cloth",zh:"布"},
+    {en:"cloudy",zh:"多云的"},
+    {en:"coach",zh:"教练，长途公车，训练"},
+    {en:"collapse",zh:"崩溃"},
+    {en:"colleague",zh:"同事，同僚"},
+    {en:"collective",zh:"集体的，共同的"},
+    {en:"colony",zh:"殖民地"},
+    {en:"column",zh:"圆柱"},
+    {en:"comb",zh:"梳子，蜂巢"},
+    {en:"combat",zh:"战斗，减轻"},
+    {en:"combination",zh:"结合"},
+    {en:"combine",zh:"结合，联合"},
+    {en:"comedy",zh:"喜剧"},
+    {en:"comfort",zh:"安慰"},
+    {en:"command",zh:"命令，控制"},
+    {en:"comment",zh:"议论，做出评价"},
+    {en:"commerce",zh:"贸易"},
+    {en:"commercial",zh:"广告，商业的"},
+    {en:"commission",zh:"委托"},
+    {en:"commit",zh:"犯罪"},
+    {en:"committee",zh:"委员会"},
+    {en:"communist",zh:"共产党员,共产主义者"},
+    {en:"compete",zh:"竞争，比赛"},
+    {en:"complex",zh:"复杂的"},
+    {en:"complicate",zh:"使复杂化"},
+    {en:"complicated",zh:"复杂的"},
+    {en:"composition",zh:"成分"},
+    {en:"compound",zh:"化合物，混合物"},
+    {en:"comprehension",zh:"理解力，领悟能力"},
+    {en:"comprise",zh:"包含，由… 组成"},
+    {en:"compromise",zh:"妥协"},
+    {en:"concentrate",zh:"全神贯注"},
+    {en:"concentration",zh:"专心"},
+    {en:"concept",zh:"概念，观念"},
+    {en:"conclude",zh:"断定"},
+    {en:"conclusion",zh:"结论"},
+    {en:"concrete",zh:"确实的，具体的"},
+    {en:"conduct",zh:"行为，实施"},
+    {en:"conference",zh:"会议"},
+    {en:"confuse",zh:"使糊涂"},
+    {en:"confusion",zh:"困惑，混乱"},
+    {en:"congress",zh:"国会，代表大会"},
+    {en:"consensus",zh:"共识"},
+    {en:"consequently",zh:"因此，所以"},
+    {en:"consideration",zh:"深思"},
+    {en:"consist",zh:"由…组成"},
+    {en:"constant",zh:"不断的"},
+    {en:"constitute",zh:"组成，被算作"},
+    {en:"construct",zh:"建造,构造"},
+    {en:"construction",zh:"建筑"},
+    {en:"consult",zh:"查阅"},
+    {en:"consume",zh:"消费，耗尽"},
+    {en:"contain",zh:"包含，克制"},
+    {en:"container",zh:"容器"},
+    {en:"contaminate",zh:"污染"},
+    {en:"contemporary",zh:"当代的"},
+    {en:"content",zh:"内容，满意的"},
+    {en:"continent",zh:"大陆"},
+    {en:"contract",zh:"合同"},
+    {en:"contradiction",zh:"矛盾，否认"},
+    {en:"convenient",zh:"方便的"},
+    {en:"conversely",zh:"相反地"},
+    {en:"convey",zh:"表达"},
+    {en:"cooperate",zh:"合作，协作"},
+    {en:"cooperation",zh:"合作"},
+    {en:"cope",zh:"对付"},
+    {en:"cord",zh:"绳索,束缚"},
+    {en:"core",zh:"核心，要点"},
+    {en:"corporate",zh:"公司的"},
+    {en:"corporation",zh:"公司"},
+    {en:"correspond",zh:"相一致"},
+    {en:"costly",zh:"昂贵的"},
+    {en:"cottage",zh:"小屋，村舍"},
+    {en:"cotton",zh:"棉花，棉布"},
+    {en:"council",zh:"委员会"},
+    {en:"counter",zh:"柜台"},
+    {en:"counterpart",zh:"对应的事物"},
+    {en:"county",zh:"郡"},
+    {en:"crack",zh:"裂缝,噼啪声"},
+    {en:"craft",zh:"手艺，飞行器"},
+    {en:"crawl",zh:"爬行，匍匐行进"},
+    {en:"creation",zh:"创造"},
+    {en:"creature",zh:"生物"},
+    {en:"crew",zh:"全体员工"},
+    {en:"cricket",zh:"板球运动， 蟋蟀"},
+    {en:"critic",zh:"批评家，评论家"},
+    {en:"criticise",zh:"批评"},
+    {en:"crowd",zh:"人群，观众"},
+    {en:"crown",zh:"王冠"},
+    {en:"crucial",zh:"关键性的"},
+    {en:"cruise",zh:"乘船游览， 以平稳速度行驶"},
+    {en:"cubic",zh:"立方体的"},
+    {en:"cue",zh:"暗示，提示"},
+    {en:"cultivate",zh:"种植"},
+    {en:"cunning",zh:"狡猾的，巧妙的"},
+    {en:"cupboard",zh:"橱柜，食物柜"},
+    {en:"curb",zh:"控制，抑制"},
+    {en:"cure",zh:"治愈"},
+    {en:"curiosity",zh:"好奇心，求知欲"},
+    {en:"curriculum",zh:"全部课程"},
+    {en:"curve",zh:"曲线，弯曲"},
+    {en:"custom",zh:"习俗"},
+    {en:"cycle",zh:"循环"},
+    {en:"dam",zh:"水坝，水库"},
+    {en:"damage",zh:"损坏，伤害"},
+    {en:"daughter",zh:"女儿"},
+    {en:"deadline",zh:"截至时期"},
+    {en:"dealing",zh:"活动"},
+    {en:"dean",zh:"系主任"},
+    {en:"debt",zh:"欠款，债务"},
+    {en:"decade",zh:"十年"},
+    {en:"decay",zh:"腐烂，腐朽"},
+    {en:"decent",zh:"像样的"},
+    {en:"decision",zh:"决定"},
+    {en:"decorate",zh:"装饰"},
+    {en:"deduce",zh:"推论，推断"},
+    {en:"deed",zh:"行为，行动"},
+    {en:"deepen",zh:"使加深"},
+    {en:"defeat",zh:"击败，战胜"},
+    {en:"defence",zh:"辩护"},
+    {en:"define",zh:"阐明 ，给… 下定义，解释"},
+    {en:"definitely",zh:"肯定"},
+    {en:"delight",zh:"使高兴"},
+    {en:"deliver",zh:"传送，递送"},
+    {en:"delivery",zh:"交付,分娩,递送"},
+    {en:"demonstrate",zh:"证明,示范"},
+    {en:"dense",zh:"稠密的，浓厚的"},
+    {en:"deny",zh:"否认"},
+    {en:"depart",zh:"离开，起程"},
+    {en:"department",zh:"（组织）部门，科等"},
+    {en:"dependent",zh:"依靠的"},
+    {en:"depress",zh:"使抑郁，使萧条"},
+    {en:"depression",zh:"抑郁症，消沉"},
+    {en:"deprive",zh:"剥夺"},
+    {en:"depth",zh:"深"},
+    {en:"derive",zh:"起源于"},
+    {en:"descend",zh:"下降，下去，遗传"},
+    {en:"description",zh:"描写"},
+    {en:"desert",zh:"沙漠"},
+    {en:"despise",zh:"轻视"},
+    {en:"dessert",zh:"甜点"},
+    {en:"destination",zh:"目的地"},
+    {en:"destroy",zh:"毁灭"},
+    {en:"detect",zh:"发现"},
+    {en:"device",zh:"装置，设备"},
+    {en:"diabetes",zh:"糖尿病"},
+    {en:"dialect",zh:"方言，土话；"},
+    {en:"diamond",zh:"钻石"},
+    {en:"dictate",zh:"口述"},
+    {en:"diet",zh:"节食，日常饮食"},
+    {en:"dietary",zh:"饮食的"},
+    {en:"digest",zh:"消化，摘要"},
+    {en:"dilemma",zh:"窘境"},
+    {en:"dine",zh:"进餐"},
+    {en:"diner",zh:"用餐者"},
+    {en:"dip",zh:"浸，蘸;，下降"},
+    {en:"diploma",zh:"毕业文凭"},
+    {en:"diplomat",zh:"外交官"},
+    {en:"disability",zh:"缺陷"},
+    {en:"disabled",zh:"有残疾的"},
+    {en:"disaster",zh:"灾难，灾祸"},
+    {en:"discharge",zh:"卸下,清偿 (债务),履行 (义务)"},
+    {en:"discipline",zh:"训练"},
+    {en:"discount",zh:"减价,打折"},
+    {en:"discrimination",zh:"歧视"},
+    {en:"disgust",zh:"厌恶，嫌恶"},
+    {en:"disk",zh:"磁盘"},
+    {en:"disorder",zh:"混乱，杂乱"},
+    {en:"disposal",zh:"处理，支配"},
+    {en:"dispute",zh:"争端"},
+    {en:"disruptive",zh:"引起混乱的，破坏性的"},
+    {en:"dissolve",zh:"使溶解,使分解"},
+    {en:"distance",zh:"距离"},
+    {en:"distant",zh:"遥远的"},
+    {en:"distinguish",zh:"区分"},
+    {en:"distract",zh:"转移"},
+    {en:"distress",zh:"使忧虑，使悲伤"},
+    {en:"distribute",zh:"分配"},
+    {en:"district",zh:"地区，区域"},
+    {en:"division",zh:"分歧"},
+    {en:"document",zh:"文件，纪录"},
+    {en:"documentary",zh:"纪录影片， 文献的"},
+    {en:"dolphin",zh:"海豚"},
+    {en:"domestic",zh:"本国的"},
+    {en:"dominant",zh:"首要的，占支配地位的"},
+    {en:"dominate",zh:"支配"},
+    {en:"donor",zh:"捐赠者，捐赠机构"},
+    {en:"downstairs",zh:"在楼下，楼下的"},
+    {en:"downtown",zh:"市中心的"},
+    {en:"dozen",zh:"一打"},
+    {en:"drag",zh:"拖,拖拉"},
+    {en:"drama",zh:"戏剧"},
+    {en:"dramatically",zh:"急剧地"},
+    {en:"drill",zh:"钻头"},
+    {en:"drip",zh:"水滴，(使) 滴下"},
+    {en:"drought",zh:"久旱，旱灾"},
+    {en:"drunk",zh:"喝醉的，酒鬼"},
+    {en:"dumb",zh:"哑的"},
+    {en:"dump",zh:"倾倒(垃圾)"},
+    {en:"dusk",zh:"黄昏"},
+    {en:"dust",zh:"尘埃，擦去"},
+    {en:"duty",zh:"责任"},
+    {en:"earnings",zh:"薪水"},
+    {en:"ease",zh:"减轻"},
+    {en:"echo",zh:"反射，重复"},
+    {en:"economist",zh:"经济学家"},
+    {en:"edge",zh:"边缘,优势"},
+    {en:"editor",zh:"编辑"},
+    {en:"effect",zh:"影响"},
+    {en:"elastic",zh:"有弹性的， 灵活的"},
+    {en:"electricity",zh:"电能"},
+    {en:"electron",zh:"电子"},
+    {en:"elementary",zh:"初级的"},
+    {en:"eliminate",zh:"排除"},
+    {en:"embrace",zh:"拥抱"},
+    {en:"emerge",zh:"暴露"},
+    {en:"emit",zh:"发出，放射"},
+    {en:"emphasis",zh:"强调"},
+    {en:"emphasise",zh:"强调"},
+    {en:"encounter",zh:"遭遇"},
+    {en:"endless",zh:"不计其数的"},
+    {en:"energetic",zh:"精力充沛的"},
+    {en:"engagement",zh:"订婚"},
+    {en:"engine",zh:"发动机"},
+    {en:"enormous",zh:"巨大的"},
+    {en:"enrol",zh:"注册"},
+    {en:"entertain",zh:"招待"},
+    {en:"entertainment",zh:"娱乐"},
+    {en:"entire",zh:"全部的，整个的"},
+    {en:"entitle",zh:"给…题名， 称呼"},
+    {en:"environmental",zh:"自然环境的，和环境有关的"},
+    {en:"envy",zh:"羡慕，嫉妒"},
+    {en:"equivalent",zh:"相同的，等价物"},
+    {en:"era",zh:"时代，年代"},
+    {en:"erect",zh:"竖立的，笔直的"},
+    {en:"error",zh:"错误"},
+    {en:"essay",zh:"文章"},
+    {en:"estate",zh:"住宅区"},
+    {en:"ethic",zh:"道德体系"},
+    {en:"evaporate",zh:"消失，蒸发"},
+    {en:"event",zh:"发生的事情，公开场合"},
+    {en:"eventually",zh:"最后，终于"},
+    {en:"evidence",zh:"证据"},
+    {en:"evident",zh:"明显的"},
+    {en:"evil",zh:"恶毒的"},
+    {en:"exact",zh:"精确的，准确的"},
+    {en:"excel",zh:"胜过平时， 擅长"},
+    {en:"exception",zh:"例外"},
+    {en:"excessive",zh:"过分的"},
+    {en:"exclude",zh:"排除，排斥"},
+    {en:"exclusively",zh:"唯一地，专有地"},
+    {en:"execute",zh:"执行"},
+    {en:"executive",zh:"管理人员， 决策的"},
+    {en:"exhibit",zh:"展览"},
+    {en:"exhibition",zh:"展览"},
+    {en:"expectancy",zh:"预料"},
+    {en:"expense",zh:"费用，价钱"},
+    {en:"expert",zh:"熟练的，专家"},
+    {en:"exploit",zh:"开发"},
+    {en:"exploration",zh:"探索"},
+    {en:"explosive",zh:"爆炸的，爆炸物"},
+    {en:"export",zh:"出口"},
+    {en:"exposure",zh:"揭露"},
+    {en:"extension",zh:"拓展，延伸"},
+    {en:"extraordinary",zh:"非凡的，特别的"},
+    {en:"facial",zh:"面部的"},
+    {en:"facilitate",zh:"促进"},
+    {en:"faith",zh:"信仰，信念"},
+    {en:"fare",zh:"成功"},
+    {en:"farewell",zh:"告别，辞别"},
+    {en:"fatal",zh:"致命的"},
+    {en:"fate",zh:"命运"},
+    {en:"fatigue",zh:"疲劳，劳累"},
+    {en:"fault",zh:"错误，缺点"},
+    {en:"feasible",zh:"可行的"},
+    {en:"feast",zh:"宴会"},
+    {en:"fee",zh:"费用"},
+    {en:"feedback",zh:"反馈的意见"},
+    {en:"fellow",zh:"同事"},
+    {en:"fiction",zh:"小说"},
+    {en:"file",zh:"文件，档案"},
+    {en:"filter",zh:"过滤器"},
+    {en:"finance",zh:"资金"},
+    {en:"firm",zh:"商行，确定的"},
+    {en:"flat",zh:"平坦的"},
+    {en:"flavor",zh:"风味"},
+    {en:"fleet",zh:"舰队("},
+    {en:"flexibility",zh:"灵活性"},
+    {en:"flexible",zh:"灵活的"},
+    {en:"flood",zh:"水灾"},
+    {en:"flu",zh:"流感"},
+    {en:"folk",zh:"人们"},
+    {en:"fond",zh:"喜欢的"},
+    {en:"fool",zh:"欺骗"},
+    {en:"forecast",zh:"预测，预报"},
+    {en:"forehead",zh:"前额"},
+    {en:"fork",zh:"叉"},
+    {en:"formation",zh:"形成，构造"},
+    {en:"formula",zh:"公式，准则"},
+    {en:"fortune",zh:"运气"},
+    {en:"forum",zh:"论坛"},
+    {en:"forward",zh:"向前，进展"},
+    {en:"fossil",zh:"化石"},
+    {en:"found",zh:"创建，兴建"},
+    {en:"fountain",zh:"喷泉"},
+    {en:"frame",zh:"框架"},
+    {en:"frequency",zh:"频率"},
+    {en:"freshman",zh:"大一新生"},
+    {en:"friction",zh:"摩擦力"},
+    {en:"frighten",zh:"使惊吓"},
+    {en:"fruit",zh:"水果"},
+    {en:"frustrated",zh:"沮丧的，懊丧的"},
+    {en:"fry",zh:"油炸"},
+    {en:"fuel",zh:"燃料，增加"},
+    {en:"fundamental",zh:"基础的，重大的"},
+    {en:"funding",zh:"基金"},
+    {en:"furniture",zh:"家具"},
+    {en:"gadget",zh:"小器具"},
+    {en:"gallery",zh:"展览馆"},
+    {en:"gap",zh:"间隔，差距，分歧"},
+    {en:"gardener",zh:"园丁，花匠"},
+    {en:"gas",zh:"气体"},
+    {en:"gaseous",zh:"气态的，气体的"},
+    {en:"gasoline",zh:"汽油"},
+    {en:"generally",zh:"通常，普遍地"},
+    {en:"generate",zh:"使形成，发生"},
+    {en:"generation",zh:"一代人，一代"},
+    {en:"genius",zh:"天赋"},
+    {en:"genuine",zh:"真的"},
+    {en:"germ",zh:"胚芽，细菌"},
+    {en:"gesture",zh:"手势"},
+    {en:"giant",zh:"巨大"},
+    {en:"given",zh:"指定的"},
+    {en:"glimpse",zh:"一瞥，一看"},
+    {en:"gloomy",zh:"黑暗的"},
+    {en:"golden",zh:"金色的"},
+    {en:"govern",zh:"管理，统治"},
+    {en:"governor",zh:"州长"},
+    {en:"grace",zh:"优美"},
+    {en:"gradual",zh:"逐渐的，平缓的"},
+    {en:"grain",zh:"谷物，谷粒"},
+    {en:"grand",zh:"重大的"},
+    {en:"grant",zh:"允许"},
+    {en:"grasp",zh:"理解，领会"},
+    {en:"grave",zh:"墓穴,坟墓"},
+    {en:"greet",zh:"迎接"},
+    {en:"grey",zh:"灰色的"},
+    {en:"grief",zh:"悲伤，伤心事"},
+    {en:"grip",zh:"紧握，柄"},
+    {en:"groan",zh:"呻吟，抱怨"},
+    {en:"grocer",zh:"杂货店，食品商"},
+    {en:"guarantee",zh:"保证"},
+    {en:"guard",zh:"守卫，警戒"},
+    {en:"guilty",zh:"犯了罪的"},
+    {en:"gum",zh:"牙龈"},
+    {en:"guy",zh:"男人"},
+    {en:"gymnasium",zh:"体育馆"},
+    {en:"halt",zh:"停止，暂停"},
+    {en:"handkerchief",zh:"手帕，围巾"},
+    {en:"handle",zh:"处理，应付"},
+    {en:"harbour",zh:"海港"},
+    {en:"hardware",zh:"硬件"},
+    {en:"hasten",zh:"加速，催促"},
+    {en:"hasty",zh:"轻率的，匆忙的"},
+    {en:"hazard",zh:"危险"},
+    {en:"heat",zh:"热度，把… 加热"},
+    {en:"heaven",zh:"天堂，天空"},
+    {en:"heel",zh:"脚后跟"},
+    {en:"hell",zh:"地狱,苦境"},
+    {en:"helmet",zh:"钢盔，头盔"},
+    {en:"highlight",zh:"突出"},
+    {en:"hillside",zh:"山坡"},
+    {en:"him",zh:"他"},
+    {en:"hinder",zh:"阻碍"},
+    {en:"hire",zh:"聘用，录用"},
+    {en:"honest",zh:"诚实的"},
+    {en:"host",zh:"主持人"},
+    {en:"household",zh:"家庭，一家人"},
+    {en:"humanity",zh:"人类"},
+    {en:"humorous",zh:"幽默的"},
+    {en:"hut",zh:"小屋"},
+    {en:"ideal",zh:"理想的"},
+    {en:"ignorant",zh:"无知的，愚昧的"},
+    {en:"illustration",zh:"说明，插图"},
+    {en:"immigrant",zh:"移民"},
+    {en:"immune",zh:"免疫的"},
+    {en:"implication",zh:"含义"},
+    {en:"imply",zh:"暗示，说明"},
+    {en:"import",zh:"进口，输入"},
+    {en:"impose",zh:"利用，欺骗"},
+    {en:"impression",zh:"印象，效果"},
+    {en:"improvement",zh:"改善，改进"},
+    {en:"inch",zh:"英寸"},
+    {en:"incidence",zh:"发生范围， 发生率"},
+    {en:"incident",zh:"事件"},
+    {en:"indeed",zh:"确实，的确"},
+    {en:"indicate",zh:"显示，表明"},
+    {en:"indicator",zh:"标志，迹象，指示器"},
+    {en:"indifferent",zh:"漠不关心的"},
+    {en:"indirect",zh:"间接的"},
+    {en:"indispensable",zh:"不可缺少的，绝对必要的"},
+    {en:"induce",zh:"引起"},
+    {en:"inefficient",zh:"无效率的"},
+    {en:"inevitable",zh:"不可避免的"},
+    {en:"infant",zh:"婴儿"},
+    {en:"infect",zh:"感染"},
+    {en:"infection",zh:"传染"},
+    {en:"infer",zh:"推断"},
+    {en:"infrastructure",zh:"基础设施"},
+    {en:"ingredient",zh:"原料，成分"},
+    {en:"inherit",zh:"继承"},
+    {en:"injure",zh:"伤害"},
+    {en:"ink",zh:"墨水"},
+    {en:"innovation",zh:"创新，创造"},
+    {en:"input",zh:"投入，输入"},
+    {en:"insert",zh:"插入"},
+    {en:"insist",zh:"坚持"},
+    {en:"inspire",zh:"鼓励"},
+    {en:"install",zh:"安装"},
+    {en:"instance",zh:"例子，实例"},
+    {en:"institute",zh:"机构"},
+    {en:"instructer",zh:"教练"},
+    {en:"insult",zh:"辱骂"},
+    {en:"insurance",zh:"保险"},
+    {en:"integrate",zh:"成为一体"},
+    {en:"integrity",zh:"正直,诚实,完整"},
+    {en:"intellectual",zh:"智力的"},
+    {en:"intelligence",zh:"智力，情报工作"},
+    {en:"intelligent",zh:"有才智的"},
+    {en:"intention",zh:"打算"},
+    {en:"interact",zh:"交流"},
+    {en:"interactive",zh:"互动的"},
+    {en:"interfere",zh:"干涉"},
+    {en:"interference",zh:"干涉"},
+    {en:"intermediate",zh:"中间的，过渡的,中级的"},
+    {en:"internal",zh:"内部的，内政的"},
+    {en:"interpret",zh:"说明，口译"},
+    {en:"interpretation",zh:"解释"},
+    {en:"intimate",zh:"亲密的，私人的"},
+    {en:"investigate",zh:"调查"},
+    {en:"investigator",zh:"调查者"},
+    {en:"investment",zh:"投资"},
+    {en:"investor",zh:"投资者"},
+    {en:"invisible",zh:"无形的，看不见的"},
+    {en:"irregular",zh:"无规律的"},
+    {en:"issue",zh:"宣布，供给"},
+    {en:"joint",zh:"联合的"},
+    {en:"jolly",zh:"欢乐的,高兴的"},
+    {en:"journal",zh:"报纸"},
+    {en:"journalist",zh:"新闻工作者"},
+    {en:"junior",zh:"初级的"},
+    {en:"jury",zh:"陪审团，评判委员会"},
+    {en:"justice",zh:"法官"},
+    {en:"justify",zh:"证明…正确；为…辩解"},
+    {en:"keen",zh:"渴望的"},
+    {en:"knob",zh:"把手"},
+    {en:"knot",zh:"（绳等的） 结， 打结"},
+    {en:"label",zh:"标签"},
+    {en:"labour",zh:"劳动，劳工"},
+    {en:"lane",zh:"小巷，车道"},
+    {en:"lantern",zh:"灯笼；提灯；灯笼式天窗"},
+    {en:"lap",zh:"一圈,大腿,拍打"},
+    {en:"largely",zh:"主要地"},
+    {en:"laughter",zh:"笑声"},
+    {en:"launch",zh:"发起，上市"},
+    {en:"laundry",zh:"洗衣店"},
+    {en:"lawyer",zh:"律师"},
+    {en:"layer",zh:"层,阶层"},
+    {en:"leadership",zh:"领导地位， 领导才能"},
+    {en:"lean",zh:"倚靠"},
+    {en:"leap",zh:"跳跃，骤变"},
+    {en:"learner",zh:"学习者"},
+    {en:"lecture",zh:"演讲"},
+    {en:"legislation",zh:"法律，立法"},
+    {en:"leisure",zh:"闲暇"},
+    {en:"liberal",zh:"自由的"},
+    {en:"lick",zh:"舔"},
+    {en:"lieutenant",zh:"中尉，副官"},
+    {en:"lifetime",zh:"一生，终身的"},
+    {en:"lightning",zh:"闪电"},
+    {en:"likely",zh:"可能的，很可能"},
+    {en:"liner",zh:"班轮，班机"},
+    {en:"liquid",zh:"液体"},
+    {en:"literary",zh:"文学的"},
+    {en:"literature",zh:"文学"},
+    {en:"loan",zh:"贷款，借款"},
+    {en:"lobby",zh:"大厅"},
+    {en:"lock",zh:"锁上"},
+    {en:"lodge",zh:"乡间小屋"},
+    {en:"loft",zh:"阁楼"},
+    {en:"log",zh:"日志，登录"},
+    {en:"logical",zh:"合理的,逻辑学的"},
+    {en:"loose",zh:"可分开的"},
+    {en:"loudspeaker",zh:"喇叭，扬声器"},
+    {en:"loyalty",zh:"忠诚"},
+    {en:"luggage",zh:"行李"},
+    {en:"madam",zh:"夫人，女士"},
+    {en:"magnet",zh:"磁铁"},
+    {en:"magnetic",zh:"有磁性的， 有吸引力的"},
+    {en:"mail",zh:"邮件，邮递"},
+    {en:"maintenance",zh:"维护"},
+    {en:"mammal",zh:"哺乳动物"},
+    {en:"management",zh:"经营，经营者"},
+    {en:"manufacture",zh:"制造"},
+    {en:"manufacturer",zh:"制造商"},
+    {en:"marble",zh:"大理石，弹珠"},
+    {en:"margin",zh:"边缘，利润"},
+    {en:"marital",zh:"婚姻的"},
+    {en:"marketing",zh:"促销"},
+    {en:"marvellous",zh:"极好的"},
+    {en:"mask",zh:"面具"},
+    {en:"massive",zh:"巨大的"},
+    {en:"mat",zh:"席子,垫子"},
+    {en:"mate",zh:"配偶"},
+    {en:"mature",zh:"成熟的"},
+    {en:"mayor",zh:"市长"},
+    {en:"meanwhile",zh:"同时"},
+    {en:"mechanic",zh:"机械师"},
+    {en:"mechanism",zh:"机制"},
+    {en:"medicine",zh:"药"},
+    {en:"medium",zh:"中等的，中号的"},
+    {en:"melt",zh:"熔化，溶解"},
+    {en:"membership",zh:"会员身份"},
+    {en:"memorial",zh:"纪念碑，追悼的"},
+    {en:"merely",zh:"仅仅，只不过"},
+    {en:"merry",zh:"愉快的，微醉的"},
+    {en:"metre",zh:"米"},
+    {en:"metric",zh:"公制的，米制的"},
+    {en:"microscope",zh:"显微镜"},
+    {en:"microwave",zh:"微波炉"},
+    {en:"midday",zh:"中午"},
+    {en:"midst",zh:"在…中间"},
+    {en:"migrate",zh:"迁移"},
+    {en:"mild",zh:"温和的"},
+    {en:"military",zh:"军事的，军人"},
+    {en:"mill",zh:"工厂，磨坊"},
+    {en:"mineral",zh:"矿物"},
+    {en:"minister",zh:"部长"},
+    {en:"minor",zh:"未成年的， 次要的"},
+    {en:"mission",zh:"使命，任务"},
+    {en:"mistress",zh:"情妇，女主人"},
+    {en:"misunderstanding",zh:"误解"},
+    {en:"modest",zh:"谦虚的"},
+    {en:"moist",zh:"潮湿的"},
+    {en:"monitor",zh:"监视"},
+    {en:"moreover",zh:"而且"},
+    {en:"mortal",zh:"凡人的"},
+    {en:"motion",zh:"运动，动作"},
+    {en:"motivation",zh:"动机"},
+    {en:"mount",zh:"逐步增加"},
+    {en:"mourn",zh:"哀悼"},
+    {en:"mud",zh:"泥"},
+    {en:"mule",zh:"骡子"},
+    {en:"multiple",zh:"多种多样的"},
+    {en:"muscle",zh:"肌肉"},
+    {en:"myth",zh:"神话"},
+    {en:"nap",zh:"打盹"},
+    {en:"narrow",zh:"狭窄的"},
+    {en:"nation",zh:"国家，民族"},
+    {en:"nationwide",zh:"全国性的"},
+    {en:"naval",zh:"海军的"},
+    {en:"neat",zh:"灵巧的，整洁的"},
+    {en:"neglect",zh:"忽略"},
+    {en:"negotiation",zh:"协商"},
+    {en:"neighbourhood",zh:"街区"},
+    {en:"nerve",zh:"神经"},
+    {en:"nest",zh:"巢，窝"},
+    {en:"net",zh:"网"},
+    {en:"niece",zh:"侄子，外甥女"},
+    {en:"nitrogen",zh:"氮"},
+    {en:"norm",zh:"规范"},
+    {en:"normal",zh:"正常的，通常的"},
+    {en:"normally",zh:"通常"},
+    {en:"novel",zh:"长篇小说"},
+    {en:"nowadays",zh:"现今"},
+    {en:"nucleus",zh:"核心，原子核"},
+    {en:"numerous",zh:"许多的"},
+    {en:"nutrient",zh:"营养物"},
+    {en:"nutrition",zh:"营养"},
+    {en:"objection",zh:"异议，反对"},
+    {en:"objective",zh:"客观的"},
+    {en:"obligation",zh:"义务"},
+    {en:"observation",zh:"观察"},
+    {en:"observe",zh:"注意到"},
+    {en:"observer",zh:"观察者"},
+    {en:"obstacle",zh:"障碍"},
+    {en:"obtain",zh:"获得"},
+    {en:"occasion",zh:"仪式"},
+    {en:"occasionally",zh:"偶尔"},
+    {en:"occur",zh:"发生，出现"},
+    {en:"odd",zh:"奇怪的"},
+    {en:"off",zh:"不工作的,在远方,离开"},
+    {en:"ongoing",zh:"持续存在的"},
+    {en:"onto",zh:"在...之上"},
+    {en:"operate",zh:"运转"},
+    {en:"operation",zh:"手术"},
+    {en:"opponent",zh:"对手，反对者"},
+    {en:"opportunity",zh:"机会，时机"},
+    {en:"opt",zh:"选择"},
+    {en:"optimistic",zh:"乐观的"},
+    {en:"option",zh:"选择，选项"},
+    {en:"orchestra",zh:"管弦乐队"},
+    {en:"orderly",zh:"有秩序的"},
+    {en:"organic",zh:"有机的，器官的"},
+    {en:"origin",zh:"起源"},
+    {en:"original",zh:"最初的,原始的"},
+    {en:"ornament",zh:"装饰"},
+    {en:"ought",zh:"应该，应当"},
+    {en:"outgoing",zh:"外向的，离开的"},
+    {en:"outline",zh:"概述"},
+    {en:"output",zh:"输出，产量"},
+    {en:"outstanding",zh:"杰出的"},
+    {en:"oven",zh:"烤箱"},
+    {en:"overcome",zh:"克服"},
+    {en:"overlook",zh:"忽略，俯视"},
+    {en:"overnight",zh:"在夜里"},
+    {en:"overtake",zh:"超过"},
+    {en:"overwhelm",zh:"压倒"},
+    {en:"ownership",zh:"所有权，产权"},
+    {en:"pace",zh:"节奏"},
+    {en:"package",zh:"包裹"},
+    {en:"panel",zh:"金属板"},
+    {en:"panic",zh:"惊恐"},
+    {en:"parental",zh:"父亲的"},
+    {en:"particular",zh:"专指的，不寻常的"},
+    {en:"particularly",zh:"特别，尤其"},
+    {en:"passive",zh:"消极的，被动的"},
+    {en:"pause",zh:"暂停，停顿"},
+    {en:"peer",zh:"同龄人，同辈人"},
+    {en:"penalty",zh:"惩罚"},
+    {en:"perceive",zh:"将…理解为，意识到"},
+    {en:"perfection",zh:"完美"},
+    {en:"perform",zh:"演出，表演"},
+    {en:"permanent",zh:"永久的"},
+    {en:"persistent",zh:"执着的"},
+    {en:"personnel",zh:"职员"},
+    {en:"perspective",zh:"态度"},
+    {en:"persuade",zh:"劝说"},
+    {en:"petrol",zh:"汽油"},
+    {en:"phase",zh:"阶段"},
+    {en:"phenomenon",zh:"现象"},
+    {en:"philosopher",zh:"哲学家"},
+    {en:"phrase",zh:"短语"},
+    {en:"physician",zh:"医师"},
+    {en:"physicist",zh:"物理学家"},
+    {en:"pigeon",zh:"鸽子"},
+    {en:"pint",zh:"品脱（容量单位）"},
+    {en:"plague",zh:"困扰，瘟疫"},
+    {en:"planet",zh:"行星"},
+    {en:"platform",zh:"平台"},
+    {en:"pledge",zh:"保证"},
+    {en:"plot",zh:"故事情节， 小块土地"},
+    {en:"plunge",zh:"暴跌"},
+    {en:"plus",zh:"加"},
+    {en:"poisonous",zh:"有毒的"},
+    {en:"pole",zh:"地极"},
+    {en:"policy",zh:"政策，方针"},
+    {en:"poll",zh:"选举投票"},
+    {en:"pond",zh:"池塘"},
+    {en:"porter",zh:"搬运工人"},
+    {en:"portion",zh:"部分"},
+    {en:"portrait",zh:"肖像，描写"},
+    {en:"position",zh:"安置，职位"},
+    {en:"possibility",zh:"可能"},
+    {en:"postage",zh:"邮费"},
+    {en:"potential",zh:"潜在的，潜力"},
+    {en:"poverty",zh:"贫穷"},
+    {en:"practical",zh:"实际的"},
+    {en:"practically",zh:"实际地"},
+    {en:"precious",zh:"珍贵的"},
+    {en:"precisely",zh:"确实"},
+    {en:"predict",zh:"预言，预告"},
+    {en:"preference",zh:"偏爱"},
+    {en:"prescribe",zh:"给…开药， 规定"},
+    {en:"presentation",zh:"展示会，介绍会"},
+    {en:"press",zh:"报刊"},
+    {en:"pressure",zh:"心理压力， 压力"},
+    {en:"prevail",zh:"流行，战胜"},
+    {en:"primarily",zh:"主要地"},
+    {en:"princess",zh:"公主"},
+    {en:"principal",zh:"最重要的"},
+    {en:"privacy",zh:"隐私"},
+    {en:"privilege",zh:"特权，优待"},
+    {en:"prize",zh:"奖品"},
+    {en:"procedure",zh:"程序"},
+    {en:"proceed",zh:"开始，继续进行"},
+    {en:"production",zh:"制造，生产"},
+    {en:"productive",zh:"多产的，富有成效的"},
+    {en:"profitable",zh:"有利润的"},
+    {en:"profound",zh:"深远的"},
+    {en:"prohibit",zh:"禁止"},
+    {en:"promote",zh:"促进，促销"},
+    {en:"promotion",zh:"晋升"},
+    {en:"prompt",zh:"促使"},
+    {en:"proper",zh:"适当的"},
+    {en:"proposal",zh:"求婚"},
+    {en:"prospect",zh:"前途，预期"},
+    {en:"protein",zh:"蛋白质"},
+    {en:"protest",zh:"反对，抗议"},
+    {en:"prove",zh:"证明，证实"},
+    {en:"proverb",zh:"谚语"},
+    {en:"provision",zh:"规定，条款"},
+    {en:"psychology",zh:"心理学"},
+    {en:"pump",zh:"输送"},
+    {en:"punch",zh:"冲压机，钻孔机"},
+    {en:"punctual",zh:"准时的，精确的"},
+    {en:"punishment",zh:"惩罚，处罚"},
+    {en:"pure",zh:"纯粹的，干净的"},
+    {en:"pursue",zh:"追求"},
+    {en:"pursuit",zh:"追求，追赶"},
+    {en:"qualify",zh:"符合"},
+    {en:"quality",zh:"优质的，质量"},
+    {en:"quantity",zh:"数量"},
+    {en:"quart",zh:"夸脱（容量单位）"},
+    {en:"quotation",zh:"报价单，引用语"},
+    {en:"racial",zh:"种族的"},
+    {en:"radar",zh:"雷达，无线电探测器"},
+    {en:"radiate",zh:"辐射，传播"},
+    {en:"radical",zh:"根本的"},
+    {en:"radium",zh:"镭"},
+    {en:"radius",zh:"半径，辐射光线"},
+    {en:"rail",zh:"铁轨，扶手"},
+    {en:"range",zh:"一系列，变化"},
+    {en:"rank",zh:"地位"},
+    {en:"rapidly",zh:"迅速地"},
+    {en:"rarely",zh:"罕有"},
+    {en:"rat",zh:"老鼠"},
+    {en:"raw",zh:"生的"},
+    {en:"ray",zh:"光线"},
+    {en:"reality",zh:"现实"},
+    {en:"reception",zh:"接待"},
+    {en:"recognise",zh:"意识到"},
+    {en:"recognize",zh:"认出，识别"},
+    {en:"recovery",zh:"恢复"},
+    {en:"recruit",zh:"吸收"},
+    {en:"reed",zh:"芦苇"},
+    {en:"reel",zh:"卷轴,胶片"},
+    {en:"refer",zh:"提到"},
+    {en:"reference",zh:"参考"},
+    {en:"refine",zh:"提纯，改进"},
+    {en:"reflection",zh:"反射"},
+    {en:"reform",zh:"改革"},
+    {en:"refreshment",zh:"点心，精力恢复"},
+    {en:"regard",zh:"注意"},
+    {en:"regardless",zh:"不顾"},
+    {en:"region",zh:"地区，区域"},
+    {en:"register",zh:"登记"},
+    {en:"regret",zh:"后悔"},
+    {en:"reinforce",zh:"加强，充实"},
+    {en:"reject",zh:"拒绝"},
+    {en:"relation",zh:"关系，亲属关系"},
+    {en:"relative",zh:"相对的，亲戚"},
+    {en:"relatively",zh:"相对地"},
+    {en:"relaxation",zh:"放松，休息"},
+    {en:"release",zh:"公开，释放"},
+    {en:"relevant",zh:"紧密相关的"},
+    {en:"reliable",zh:"可信赖的"},
+    {en:"relieve",zh:"解除"},
+    {en:"religious",zh:"宗教的"},
+    {en:"reluctant",zh:"不情愿的"},
+    {en:"remarkable",zh:"非凡的"},
+    {en:"remedy",zh:"处理方法"},
+    {en:"remove",zh:"移开，去掉"},
+    {en:"render",zh:"使成为，给予"},
+    {en:"renew",zh:"重新开始"},
+    {en:"renewal",zh:"重新开始"},
+    {en:"rent",zh:"租用，出租"},
+    {en:"repeatedly",zh:"反复地"},
+    {en:"reporter",zh:"记者"},
+    {en:"represent",zh:"代表"},
+    {en:"representative",zh:"代表"},
+    {en:"reproduce",zh:"繁殖，复刻"},
+    {en:"republic",zh:"共和国，共和政体"},
+    {en:"reputation",zh:"名声"},
+    {en:"rescue",zh:"营救"},
+    {en:"reservation",zh:"预订"},
+    {en:"reserve",zh:"保留，贮备"},
+    {en:"resident",zh:"居民，居住的"},
+    {en:"residential",zh:"住宅的，适合居住的"},
+    {en:"resist",zh:"忍住"},
+    {en:"resolution",zh:"解决，决心"},
+    {en:"resolve",zh:"解决"},
+    {en:"resort",zh:"诉诸"},
+    {en:"respectively",zh:"分别地，各自地"},
+    {en:"respondent",zh:"调查对象"},
+    {en:"restless",zh:"焦躁不安的；不安宁的"},
+    {en:"restrain",zh:"抑制，控制"},
+    {en:"restriction",zh:"限制"},
+    {en:"resume",zh:"重新开始， 简历"},
+    {en:"retain",zh:"保持"},
+    {en:"retell",zh:"复述"},
+    {en:"retire",zh:"退休"},
+    {en:"retirement",zh:"退休，退役"},
+    {en:"retreat",zh:"撤退"},
+    {en:"reveal",zh:"揭示，显示"},
+    {en:"revenge",zh:"报复，复仇"},
+    {en:"revenue",zh:"收入"},
+    {en:"revise",zh:"改变,复习"},
+    {en:"rid",zh:"摆脱"},
+    {en:"riddle",zh:"谜语"},
+    {en:"rigid",zh:"严格的，僵硬的"},
+    {en:"ring",zh:"环形物,铃声"},
+    {en:"risky",zh:"有危险的"},
+    {en:"rival",zh:"竞争对手"},
+    {en:"robot",zh:"机器人"},
+    {en:"rod",zh:"竿，棒"},
+    {en:"roller",zh:"滚筒"},
+    {en:"romantic",zh:"浪漫的"},
+    {en:"roof",zh:"屋顶"},
+    {en:"root",zh:"根，根源"},
+    {en:"rough",zh:"大致的，粗糙的"},
+    {en:"roughly",zh:"粗糙地，概略地"},
+    {en:"royal",zh:"王室的"},
+    {en:"ruin",zh:"(使)破产， 废墟"},
+    {en:"sacrifice",zh:"牺牲，舍弃"},
+    {en:"saddle",zh:"鞍状物，车座"},
+    {en:"sail",zh:"航行"},
+    {en:"salary",zh:"薪金"},
+    {en:"sample",zh:"样本"},
+    {en:"sand",zh:"沙子"},
+    {en:"saving",zh:"节省物"},
+    {en:"scale",zh:"等级"},
+    {en:"scan",zh:"扫描，扫描检查"},
+    {en:"scandal",zh:"丑闻"},
+    {en:"scar",zh:"伤痕"},
+    {en:"scenery",zh:"风景，景色"},
+    {en:"scheme",zh:"计划，策划"},
+    {en:"scholar",zh:"学者"},
+    {en:"scholarship",zh:"奖学金"},
+    {en:"scissors",zh:"剪刀"},
+    {en:"scold",zh:"责骂"},
+    {en:"scope",zh:"范围"},
+    {en:"score",zh:"分数"},
+    {en:"scorn",zh:"轻蔑，嘲笑"},
+    {en:"scrape",zh:"刮,擦"},
+    {en:"secondary",zh:"中学的，中等教育的"},
+    {en:"sector",zh:"部门"},
+    {en:"select",zh:"选拔，选择"},
+    {en:"semester",zh:"学期"},
+    {en:"senate",zh:"参议院，上院"},
+    {en:"senator",zh:"参议员"},
+    {en:"sensible",zh:"明智的，意识到"},
+    {en:"separate",zh:"分离的,单独的"},
+    {en:"session",zh:"会议，（法庭的）开庭"},
+    {en:"settle",zh:"定居"},
+    {en:"sharp",zh:"急剧的"},
+    {en:"shave",zh:"刮胡子"},
+    {en:"sheet",zh:"床单，一张"},
+    {en:"shelf",zh:"架子，隔板"},
+    {en:"shiver",zh:"颤抖"},
+    {en:"shock",zh:"震惊"},
+    {en:"shoot",zh:"开枪"},
+    {en:"shortcoming",zh:"缺点"},
+    {en:"shout",zh:"呼喊，喊叫"},
+    {en:"shriek",zh:"尖叫"},
+    {en:"shrink",zh:"收缩"},
+    {en:"shuttle",zh:"往返于两地的交通工具"},
+    {en:"sight",zh:"看见"},
+    {en:"sincere",zh:"真诚的"},
+    {en:"single",zh:"单一的，单身的"},
+    {en:"sink",zh:"洗涤池"},
+    {en:"sketch",zh:"素描"},
+    {en:"skiing",zh:"滑雪"},
+    {en:"skin",zh:"皮肤"},
+    {en:"slam",zh:"撞击,冲击"},
+    {en:"slave",zh:"奴隶"},
+    {en:"slavery",zh:"奴隶制度"},
+    {en:"slender",zh:"细长的，苗条的"},
+    {en:"slice",zh:"薄片"},
+    {en:"slightly",zh:"稍微"},
+    {en:"slip",zh:"下降"},
+    {en:"slipper",zh:"拖鞋"},
+    {en:"slippery",zh:"狡猾的，不稳定的"},
+    {en:"slit",zh:"切口，裂缝"},
+    {en:"slope",zh:"斜坡，倾斜"},
+    {en:"sly",zh:"狡猾的,淘气的"},
+    {en:"soar",zh:"急升，升腾"},
+    {en:"sob",zh:"啜泣"},
+    {en:"soccer",zh:"足球"},
+    {en:"socialise",zh:"交往"},
+    {en:"software",zh:"软件"},
+    {en:"soil",zh:"土壤，弄脏"},
+    {en:"solar",zh:"太阳的"},
+    {en:"solid",zh:"结实的"},
+    {en:"somehow",zh:"不知为什么"},
+    {en:"sophisticated",zh:"复杂的，精致的，久经世故的"},
+    {en:"span",zh:"持续时间"},
+    {en:"spark",zh:"引发,触发,火星"},
+    {en:"specialise",zh:"专门研究"},
+    {en:"specialist",zh:"专家"},
+    {en:"specific",zh:"明确的，明确的"},
+    {en:"specifically",zh:"特地"},
+    {en:"spider",zh:"蜘蛛，设圈套者"},
+    {en:"spilt",zh:"洒出，溢出"},
+    {en:"spit",zh:"吐痰"},
+    {en:"spray",zh:"喷洒，喷剂"},
+    {en:"springtime",zh:"春天，春季"},
+    {en:"stab",zh:"刺，戳"},
+    {en:"stability",zh:"稳定性"},
+    {en:"stable",zh:"稳定的"},
+    {en:"stack",zh:"烟囱，一叠"},
+    {en:"standpoint",zh:"立场，观点"},
+    {en:"stare",zh:"凝视"},
+    {en:"statement",zh:"声明，阐述"},
+    {en:"statesman",zh:"政治家"},
+    {en:"statistic",zh:"统计数字， 统计学"},
+    {en:"steady",zh:"稳定的，持续的"},
+    {en:"steal",zh:"偷窃"},
+    {en:"steep",zh:"陡峭的"},
+    {en:"stem",zh:"茎"},
+    {en:"stern",zh:"严厉的，坚定的"},
+    {en:"stewardess",zh:"女管家"},
+    {en:"stimulate",zh:"刺激"},
+    {en:"stir",zh:"搅拌"},
+    {en:"stock",zh:"股票"},
+    {en:"stomach",zh:"胃，腹部"},
+    {en:"stove",zh:"炉子，火炉"},
+    {en:"straight",zh:"直的,诚实的"},
+    {en:"strap",zh:"带子，皮带"},
+    {en:"strawberry",zh:"草莓"},
+    {en:"stream",zh:"小河"},
+    {en:"stretch",zh:"拉伸"},
+    {en:"string",zh:"细绳"},
+    {en:"strive",zh:"努力"},
+    {en:"struggle",zh:"奋斗，争取"},
+    {en:"stuff",zh:"东西，材料"},
+    {en:"stylish",zh:"时髦的"},
+    {en:"submerge",zh:"淹没"},
+    {en:"submit",zh:"提交"},
+    {en:"subsequent",zh:"随后的，后来的"},
+    {en:"substantial",zh:"大量的"},
+    {en:"suburb",zh:"郊区"},
+    {en:"suburban",zh:"郊区的"},
+    {en:"sufficient",zh:"足够的"},
+    {en:"summarize",zh:"总结，概述"},
+    {en:"sunrise",zh:"日出，黎明"},
+    {en:"superior",zh:"上级"},
+    {en:"surgery",zh:"外科手术"},
+    {en:"surrender",zh:"投降"},
+    {en:"suspend",zh:"暂停"},
+    {en:"sustain",zh:"维持"},
+    {en:"sustainable",zh:"可持续的"},
+    {en:"swamp",zh:"沼泽,湿地"},
+    {en:"sweat",zh:"汗"},
+    {en:"swell",zh:"(使)膨胀,增大"},
+    {en:"Swiss",zh:"瑞士的；瑞士人"},
+    {en:"switch",zh:"改变"},
+    {en:"sword",zh:"剑，刀"},
+    {en:"symbol",zh:"符号"},
+    {en:"sympathetic",zh:"同情的，有同情心的"},
+    {en:"sympathy",zh:"同情"},
+    {en:"symptom",zh:"症状"},
+    {en:"system",zh:"体制，系统"},
+    {en:"tackle",zh:"处理"},
+    {en:"tailor",zh:"裁缝"},
+    {en:"tale",zh:"故事，传说"},
+    {en:"tap",zh:"轻拍，利用"},
+    {en:"tax",zh:"税，对…征税"},
+    {en:"tear",zh:"眼泪，撕开"},
+    {en:"technical",zh:"技术的"},
+    {en:"technique",zh:"技术"},
+    {en:"tedious",zh:"沉闷的，冗长乏味的"},
+    {en:"temporary",zh:"短暂地"},
+    {en:"tendency",zh:"趋势"},
+    {en:"tennis",zh:"网球"},
+    {en:"tension",zh:"紧张"},
+    {en:"territory",zh:"领土，领地"},
+    {en:"terrorist",zh:"恐怖主义者"},
+    {en:"textile",zh:"纺织品，纺织的"},
+    {en:"theory",zh:"理论"},
+    {en:"therapy",zh:"治疗，疗法"},
+    {en:"thrive",zh:"兴旺"},
+    {en:"throughout",zh:"自始至终， 遍及"},
+    {en:"thumb",zh:"拇指"},
+    {en:"thunder",zh:"雷"},
+    {en:"tick",zh:"滴答声,标记号"},
+    {en:"ticket",zh:"票，入场券"},
+    {en:"tide",zh:"潮汐"},
+    {en:"tighten",zh:"变紧，加强"},
+    {en:"timely",zh:"及时的"},
+    {en:"tip",zh:"给小费，实用的提示"},
+    {en:"tire",zh:"疲劳"},
+    {en:"tissue",zh:"纸巾"},
+    {en:"tobacco",zh:"烟草"},
+    {en:"tolerate",zh:"忍受"},
+    {en:"tone",zh:"语气"},
+    {en:"tortoise",zh:"乌龟"},
+    {en:"trace",zh:"查出，找出"},
+    {en:"tragedy",zh:"悲剧，灾难"},
+    {en:"transfer",zh:"迁移,过户， 转移"},
+    {en:"transform",zh:"使改变外观"},
+    {en:"transformation",zh:"彻底地变化，改革"},
+    {en:"transmit",zh:"输送"},
+    {en:"trap",zh:"陷阱"},
+    {en:"treat",zh:"治疗，对待"},
+    {en:"treatment",zh:"治疗"},
+    {en:"tremendous",zh:"巨大的，极好的"},
+    {en:"tribe",zh:"部落，族"},
+    {en:"trick",zh:"诡计"},
+    {en:"tricky",zh:"难办的，狡猾的"},
+    {en:"trigger",zh:"引起，触发，扳机"},
+    {en:"triumph",zh:"胜利"},
+    {en:"troublesome",zh:"令人烦恼的，讨厌的"},
+    {en:"truck",zh:"卡车，交易"},
+    {en:"tube",zh:"管，用管输送"},
+    {en:"tuition",zh:"学费"},
+    {en:"tune",zh:"曲调"},
+    {en:"turkey",zh:"火鸡"},
+    {en:"tutor",zh:"家庭教师"},
+    {en:"twinkle",zh:"闪烁，（眼睛）闪亮"},
+    {en:"typhoon",zh:"台风"},
+    {en:"unconscious",zh:"无意识的， 失去知觉的"},
+    {en:"uncover",zh:"发现"},
+    {en:"undergo",zh:"经历"},
+    {en:"undergraduate",zh:"本科生"},
+    {en:"underline",zh:"强调，突出"},
+    {en:"undermine",zh:"削弱"},
+    {en:"underneath",zh:"在下面"},
+    {en:"unemployment",zh:"失业"},
+    {en:"uniform",zh:"校服，一致的"},
+    {en:"union",zh:"联盟"},
+    {en:"universe",zh:"宇宙"},
+    {en:"unlikely",zh:"不太可能的"},
+    {en:"unpleasant",zh:"讨厌的，使人不愉快的"},
+    {en:"upgrade",zh:"提高，改进"},
+    {en:"upset",zh:"使生气"},
+    {en:"upwards",zh:"向上"},
+    {en:"usage",zh:"使用，利用"},
+    {en:"utility",zh:"多用途的"},
+    {en:"vacant",zh:"空虚的，空缺的"},
+    {en:"vain",zh:"徒劳的，无结果的"},
+    {en:"valid",zh:"有效的"},
+    {en:"vary",zh:"相异，不同"},
+    {en:"vast",zh:"巨大的"},
+    {en:"vehicle",zh:"车辆，交通工具"},
+    {en:"velvet",zh:"丝绒"},
+    {en:"venture",zh:"企业，商业活动"},
+    {en:"verbal",zh:"文字的，口头的"},
+    {en:"version",zh:"版本"},
+    {en:"via",zh:"经由"},
+    {en:"viewpoint",zh:"观点，视角"},
+    {en:"violate",zh:"违反，侵犯"},
+    {en:"virtually",zh:"几乎"},
+    {en:"virtue",zh:"美德，优点"},
+    {en:"virus",zh:"病毒"},
+    {en:"visible",zh:"看得见的"},
+    {en:"visual",zh:"视力的"},
+    {en:"volcanic",zh:"火山的，火山引起的"},
+    {en:"volt",zh:"伏特（电压单位）"},
+    {en:"volume",zh:"体积"},
+    {en:"voluntary",zh:"自愿的"},
+    {en:"vulnerable",zh:"脆弱的"},
+    {en:"wage",zh:"工资"},
+    {en:"waiter",zh:"服务员"},
+    {en:"wall",zh:"墙壁"},
+    {en:"wander",zh:"漫游"},
+    {en:"ward",zh:"病房，牢房"},
+    {en:"warm",zh:"温暖的，热情的"},
+    {en:"wave",zh:"挥手"},
+    {en:"weaken",zh:"减弱"},
+    {en:"wealthy",zh:"富有的"},
+    {en:"weapon",zh:"武器"},
+    {en:"wedding",zh:"婚礼"},
+    {en:"welfare",zh:"幸福，福利"},
+    {en:"whilst",zh:"当…的时候，虽然 （等于 while）"},
+    {en:"whirl",zh:"(使)旋转"},
+    {en:"wicked",zh:"邪恶的，恶劣的"},
+    {en:"widespread",zh:"普遍的"},
+    {en:"wireless",zh:"无线的"},
+    {en:"workforce",zh:"劳动力，劳动人口"},
+    {en:"worth",zh:"价值,值得"},
+    {en:"worthwhile",zh:"有价值的， 有益的"},
+    {en:"worthy",zh:"值得的"},
+    {en:"wrap",zh:"包，裹"},
+    {en:"wreath",zh:"花冠，圈状物"},
+    {en:"wreck",zh:"破坏，失事"},
+    {en:"yield",zh:"产生"},
+    {en:"yoga",zh:"瑜伽"},
+    {en:"youth",zh:"青年时期"},
+    {en:"zeal",zh:"热情，热心"},
+    {en:"zealous",zh:"热心的，热情的"},
+    {en:"zone",zh:"地带，地区"},
+];
+
+// ==================== 状态 ====================
+const DEFAULT_STATE = {
+    words: BUILTIN_WORDS,
+    order: [],
+    index: 0,
+    wrong: {},
+    stats: {},
+    countdowns: [],
+    lastDate: '',
+    streak: 0,
+    roundResults: []
+};
+
+let state = {};
+
+function loadState(){
+    try{
+        const raw = localStorage.getItem('vm_state');
+        if(raw){
+            const saved = JSON.parse(raw);
+            // 合并默认值，避免旧版本缺少字段
+            state = Object.assign({}, DEFAULT_STATE, saved);
+            // 确保 words 至少是空数组
+            if(!Array.isArray(state.words)) state.words = [];
+            if(!Array.isArray(state.order)) state.order = [];
+            if(typeof state.index !== 'number') state.index = 0;
+            if(!state.wrong || typeof state.wrong !== 'object') state.wrong = {};
+            if(!state.stats || typeof state.stats !== 'object') state.stats = {};
+            if(!Array.isArray(state.countdowns)) state.countdowns = [];
+            if(typeof state.lastDate !== 'string') state.lastDate = '';
+            if(typeof state.streak !== 'number') state.streak = 0;
+            if(!Array.isArray(state.roundResults)) state.roundResults = [];
+        } else {
+            state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            // 首次使用：生成乱序
+            state.order = shuffle(state.words.map((_,i)=>i));
+            saveState();
+        }
+    }catch(e){
+        state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        state.order = shuffle(state.words.map((_,i)=>i));
+    }
+}
+
+function saveState(){
+    try{
+        localStorage.setItem('vm_state', JSON.stringify(state));
+    }catch(e){
+        // localStorage 满，尝试清理旧数据
+        alert('存储空间不足，请清理浏览器数据');
+    }
+}
+
+// ==================== 参考词库 (B) ====================
+let refWords = [];
+
+function loadRefWords(){
+    try{
+        const raw = localStorage.getItem('vm_ref_words');
+        if(raw) refWords = JSON.parse(raw);
+        if(!Array.isArray(refWords)) refWords = [];
+    }catch(e){ refWords = []; }
+}
+
+function saveRefWords(){
+    try{ localStorage.setItem('vm_ref_words', JSON.stringify(refWords)); }
+    catch(e){ alert('存储空间不足'); }
+}
+
+function syncRefChecked(){
+    // 将 A 库中的单词在 B 库中标记为已收录
+    const mainSet = new Set(state.words.map(w=>w.en.toLowerCase()));
+    let changed = false;
+    for(const r of refWords){
+        const inMain = mainSet.has(r.en.toLowerCase());
+        if(r.inMain !== inMain){ r.inMain = inMain; changed = true; }
+    }
+    if(changed) saveRefWords();
+}
+
+function renderRefPage(){
+    loadRefWords();
+    syncRefChecked();
+    const listEl = document.getElementById('ref-list');
+    const emptyEl = document.getElementById('ref-empty');
+    const coverageEl = document.getElementById('ref-coverage');
+
+    if(refWords.length===0){
+        listEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        coverageEl.textContent = '';
+        return;
+    }
+    emptyEl.style.display = 'none';
+
+    const checked = refWords.filter(r=>r.inMain).length;
+    coverageEl.textContent = `已覆盖 ${checked}/${refWords.length}`;
+
+    // 按首字母分组
+    const groups = {};
+    for(const r of refWords){
+        const letter = r.en[0].toUpperCase();
+        if(!groups[letter]) groups[letter] = {checked:[],unchecked:[]};
+        groups[letter][r.inMain?'checked':'unchecked'].push(r);
+    }
+    const letters = Object.keys(groups).sort();
+
+    let html = '';
+    for(const letter of letters){
+        const g = groups[letter];
+        const total = g.checked.length + g.unchecked.length;
+        html += `<div class="ref-group">
+            <div class="ref-group-header"><span class="ref-letter">${letter}</span><span class="ref-count">${g.checked.length}/${total}</span></div>`;
+        // 已收录
+        if(g.checked.length>0){
+            html += `<div class="ref-subsection"><div class="ref-subtitle">已收录 (${g.checked.length})</div>`;
+            for(const w of g.checked.sort((a,b)=>a.en.localeCompare(b.en))){
+                html += `<div class="ref-word checked"><span class="ref-check">&#10003;</span><span class="ref-en">${esc(w.en)}</span><span class="ref-zh">${esc(w.zh)}</span></div>`;
+            }
+            html += `</div>`;
+        }
+        // 未收录
+        if(g.unchecked.length>0){
+            html += `<div class="ref-subsection"><div class="ref-subtitle">未收录 (${g.unchecked.length})</div>`;
+            for(const w of g.unchecked.sort((a,b)=>a.en.localeCompare(b.en))){
+                html += `<div class="ref-word unchecked"><span class="ref-check"></span><span class="ref-en">${esc(w.en)}</span><span class="ref-zh">${esc(w.zh)}</span></div>`;
+            }
+            html += `</div>`;
+        }
+        html += `</div>`;
+    }
+    listEl.innerHTML = html;
+}
+
+// ==================== 工具函数 ====================
+function shuffle(arr){
+    const a = [...arr];
+    for(let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+}
+
+function today(){
+    const d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function daysBetween(d1,d2){
+    const a = new Date(d1); const b = new Date(d2);
+    return Math.floor((b-a)/(1000*60*60*24));
+}
+
+// ==================== 解析文本 ====================
+function parseWordText(text){
+    // 移除 PDF 页面标记
+    text = text.replace(/--\s*\d+\s*of\s*\d+\s*--/g, '');
+    // 移除表头行
+    const skip = /^(姓名|日期|第.*课|词数|第\d+天|复习|日期\s*\d|遗忘|词数)[：:\s]/;
+    const lines = text.split(/[\n\r]+/);
+    const cleaned = [];
+    for(const line of lines){
+        const t = line.trim();
+        if(!t) continue;
+        if(skip.test(t)) continue;
+        if(/^(复习|遗忘|词数)$/.test(t)) continue;
+        if(/^[\d\-]+\s+[\d\-]+/.test(t)) continue; // 日期行 05-25 05-26...
+        cleaned.push(t);
+    }
+    const joined = cleaned.join(' ').replace(/\s+/g,' ').trim();
+    // 提取 English-Chinese 对：字母单词 + 空格 + 直到下一个字母单词之前的内容
+    const re = /([a-zA-Z]+)\s+(.+?)(?=\s+[a-zA-Z]+\s|$)/g;
+    const entries = [];
+    let m;
+    while((m=re.exec(joined))!==null){
+        const zh = m[2].trim();
+        if(/[一-鿿]/.test(zh)){
+            entries.push({en:m[1],zh});
+        }
+    }
+    return entries;
+}
+
+// ==================== 语音 ====================
+function speakWord(word){
+    if(!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(word);
+    u.lang = 'en-US';
+    u.rate = 0.85;
+    // 尝试获取英语语音
+    const voices = window.speechSynthesis.getVoices();
+    const enVoice = voices.find(v=>v.lang.startsWith('en'));
+    if(enVoice) u.voice = enVoice;
+    window.speechSynthesis.speak(u);
+}
+
+// ==================== 页面路由 ====================
+let currentPage = 'home';
+
+function navigate(page){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    const el = document.getElementById('page-'+page);
+    if(el) el.classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b=>{
+        b.classList.toggle('active', b.dataset.page===page);
+    });
+    currentPage = page;
+    if(page==='home') renderHome();
+    if(page==='study') renderStudy();
+    if(page==='wrong') renderWrongList();
+    if(page==='stats') renderStats();
+    if(page==='import') renderImport();
+    if(page==='ref') renderRefPage();
+}
+
+// ==================== 主页渲染 ====================
+function renderHome(){
+    checkDayReset();
+    const td = today();
+    const ds = state.stats[td] || {tested:0,correct:0};
+    document.getElementById('stat-tested').textContent = ds.tested;
+    document.getElementById('stat-rate').textContent = ds.tested>0 ? Math.round(ds.correct/ds.tested*100)+'%' : '--%';
+    document.getElementById('stat-wrong').textContent = Object.keys(state.wrong).length;
+    // streak badge
+    const badge = document.getElementById('streak-badge');
+    if(state.streak > 1){
+        badge.innerHTML = '<span class="streak-fire">&#9650;</span> 连续 '+state.streak+' 天';
+        badge.style.display = '';
+    } else {
+        badge.style.display = 'none';
+    }
+    renderCountdowns();
+    const total = state.words.length;
+    document.getElementById('word-count-info').textContent = total>0 ? `词库共 ${total} 个单词` : '尚未导入单词';
+}
+
+function renderCountdowns(){
+    const list = document.getElementById('countdown-list');
+    const td = today();
+    list.innerHTML = state.countdowns.map((cd,i)=>{
+        const days = daysBetween(td, cd.date);
+        let dsText, dsColor;
+        if(days>0){dsText=days+'天';dsColor='var(--blue)';}
+        else if(days===0){dsText='今天';dsColor='var(--green)';}
+        else{dsText='已过'+(Math.abs(days))+'天';dsColor='var(--text3)';}
+        return `<div class="countdown-item" data-cd="${i}">
+            <div><div class="countdown-name">${esc(cd.name)}</div><div class="countdown-date">${cd.date}</div></div>
+            <div class="countdown-days" style="color:${dsColor}">${dsText}</div>
+        </div>`;
+    }).join('');
+    // 点击编辑
+    list.querySelectorAll('.countdown-item').forEach(el=>{
+        el.addEventListener('click',()=>editCountdown(parseInt(el.dataset.cd)));
+    });
+}
+
+function esc(s){
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+// ==================== 学习渲染 ====================
+let studyMode = 'normal'; // 'normal' | 'wrong-review'
+let revealed = false;
+
+function getStudyList(){
+    if(studyMode==='wrong-review'){
+        return Object.values(state.wrong);
+    }
+    return state.order.map(i=>state.words[i]);
+}
+
+function renderStudy(){
+    const list = getStudyList();
+    const total = list.length;
+    const idx = state.index;
+    const dotsEl = document.getElementById('progress-dots');
+    const card = document.getElementById('word-card');
+    card.classList.remove('flash-green','shake');
+
+    if(total===0){
+        document.getElementById('word-en').textContent = '没有单词';
+        document.getElementById('word-zh').style.visibility = 'hidden';
+        document.getElementById('word-zh').textContent = '';
+        document.getElementById('btn-reveal').style.display = 'none';
+        document.getElementById('answer-btns').style.display = 'none';
+        document.getElementById('btn-speak').style.display = 'none';
+        dotsEl.innerHTML = '';
+        document.getElementById('progress-text').textContent = '';
+        document.getElementById('study-mode-label').textContent = studyMode==='wrong-review' ? '错词复习' : '学习';
+        return;
+    }
+    if(idx >= total){
+        showCompletion();
+        return;
+    }
+    document.getElementById('btn-speak').style.display = '';
+    const word = list[idx];
+    revealed = false;
+    document.getElementById('word-en').textContent = word.en;
+    document.getElementById('word-zh').style.visibility = 'hidden';
+    document.getElementById('word-zh').textContent = word.zh;
+    document.getElementById('btn-reveal').style.display = '';
+    document.getElementById('answer-btns').style.display = 'none';
+    document.getElementById('progress-text').textContent = (idx+1)+' / '+total;
+    document.getElementById('study-mode-label').textContent = studyMode==='wrong-review' ? '错词复习' : '学习';
+    // 渲染圆点指示器
+    dotsEl.innerHTML = '';
+    for(let i=0;i<total;i++){
+        const dot = document.createElement('span');
+        dot.className = 'dot';
+        if(i<idx){
+            dot.classList.add(state.roundResults[i]==='correct'?'correct':'wrong');
+        } else if(i===idx){
+            dot.classList.add('active');
+        }
+        dotsEl.appendChild(dot);
+    }
+}
+
+// ==================== 学习操作 ====================
+function revealWord(){
+    revealed = true;
+    document.getElementById('word-zh').style.visibility = 'visible';
+    document.getElementById('btn-reveal').style.display = 'none';
+    document.getElementById('answer-btns').style.display = 'flex';
+}
+
+function answerWord(correct){
+    if(!revealed) return;
+    revealed = false; // 防止重复点击
+    checkDayReset();
+    const td = today();
+    if(!state.stats[td]) state.stats[td] = {tested:0,correct:0};
+    state.stats[td].tested++;
+
+    // 记录本轮结果
+    state.roundResults[state.index] = correct?'correct':'wrong';
+
+    let removed = false;
+    if(correct){
+        state.stats[td].correct++;
+        if(studyMode==='wrong-review'){
+            const list = Object.values(state.wrong);
+            const word = list[state.index];
+            if(word && state.wrong[word.en]){
+                state.wrong[word.en].count--;
+                if(state.wrong[word.en].count <= 0){
+                    delete state.wrong[word.en];
+                    removed = true;
+                }
+            }
+        }
+    } else {
+        const list = getStudyList();
+        const word = list[state.index];
+        if(word){
+            if(!state.wrong[word.en]){
+                state.wrong[word.en] = {en:word.en,zh:word.zh,count:0};
+            }
+            state.wrong[word.en].count++;
+        }
+    }
+
+    // 动效反馈
+    const card = document.getElementById('word-card');
+    if(correct){
+        card.classList.add('flash-green');
+    } else {
+        card.classList.add('shake');
+        card.addEventListener('animationend', ()=>card.classList.remove('shake'), {once:true});
+    }
+
+    // 更新圆点
+    const dotsEl = document.getElementById('progress-dots');
+    const dots = dotsEl.children;
+    if(dots[state.index]){
+        dots[state.index].classList.remove('active');
+        dots[state.index].classList.add(correct?'correct':'wrong');
+    }
+
+    if(!removed) state.index++;
+    const updatedList = getStudyList();
+    if(state.index >= updatedList.length && studyMode==='wrong-review'){
+        if(Object.keys(state.wrong).length > 0){
+            state.index = 0;
+        }
+    }
+    saveState();
+
+    if(correct && state.index < updatedList.length){
+        // 答对：短暂动画后自动翻下一词
+        setTimeout(()=>{
+            card.classList.remove('flash-green');
+            renderStudy();
+            renderHome();
+        }, 400);
+    } else {
+        // 答错 或 已完成：立即切换
+        setTimeout(()=>{
+            card.classList.remove('flash-green');
+            renderStudy();
+            renderHome();
+        }, 300);
+    }
+}
+
+// ==================== 完成弹窗 ====================
+function showCompletion(){
+    const td = today();
+    const ds = state.stats[td] || {tested:0,correct:0};
+    const roundTotal = state.roundResults.length;
+    const roundCorrect = state.roundResults.filter(r=>r==='correct').length;
+    const roundRate = roundTotal>0 ? Math.round(roundCorrect/roundTotal*100) : 0;
+
+    document.getElementById('complete-tested').textContent = roundTotal;
+    document.getElementById('complete-rate').textContent = roundRate+'%';
+
+    let title,detail;
+    if(roundRate>=90){title='太强了';detail='正确率 '+roundRate+'%，保持这个状态！';}
+    else if(roundRate>=70){title='表现不错';detail='正确率 '+roundRate+'%，再复习一轮巩固一下？';}
+    else{title='继续加油';detail='正确率 '+roundRate+'%，多练练错词会有进步';}
+    document.getElementById('complete-title').textContent = title;
+    document.getElementById('complete-detail').textContent = detail;
+
+    // 禁用学习页按钮避免误触
+    document.getElementById('word-en').textContent = '完成';
+    document.getElementById('word-zh').style.visibility = 'hidden';
+    document.getElementById('btn-reveal').style.display = 'none';
+    document.getElementById('answer-btns').style.display = 'none';
+    document.getElementById('btn-speak').style.display = 'none';
+    document.getElementById('progress-text').textContent = '';
+
+    document.getElementById('modal-complete').classList.add('show');
+}
+
+// ==================== 错词本渲染 ====================
+function renderWrongList(){
+    const wrongs = Object.values(state.wrong).sort((a,b)=>b.count-a.count);
+    const listEl = document.getElementById('wrong-list');
+    const emptyEl = document.getElementById('wrong-empty');
+    const btnEl = document.getElementById('btn-wrong-review2');
+    if(wrongs.length===0){
+        listEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        btnEl.style.display = 'none';
+    } else {
+        emptyEl.style.display = 'none';
+        btnEl.style.display = '';
+        listEl.innerHTML = wrongs.map(w=>`
+            <div class="wrong-item">
+                <div><div class="wrong-en">${esc(w.en)}</div><div class="wrong-zh">${esc(w.zh)}</div></div>
+                <span class="wrong-count">错${w.count}次</span>
+            </div>
+        `).join('');
+    }
+}
+
+// ==================== 统计页渲染 ====================
+function renderStats(){
+    const tbody = document.getElementById('stats-body');
+    const dates = Object.keys(state.stats).sort().reverse();
+    if(dates.length===0){
+        tbody.innerHTML = '<tr><td colspan="4" class="text-tertiary">暂无记录</td></tr>';
+        return;
+    }
+    tbody.innerHTML = dates.map(d=>{
+        const s = state.stats[d];
+        const rate = s.tested>0 ? Math.round(s.correct/s.tested*100)+'%' : '--';
+        return `<tr><td>${d}</td><td>${s.tested}</td><td>${s.correct}</td><td>${rate}</td></tr>`;
+    }).join('');
+}
+
+// ==================== 导入页渲染 ====================
+function renderImport(){
+    // no-op; preview state managed separately
+}
+
+// ==================== 倒数日 ====================
+let editingCdIndex = -1;
+
+function addCountdown(){
+    editingCdIndex = -1;
+    document.getElementById('modal-countdown-title').textContent = '添加倒数日';
+    document.getElementById('cd-name').value = '';
+    document.getElementById('cd-date').value = '';
+    document.getElementById('btn-cd-delete').style.display = 'none';
+    document.getElementById('modal-countdown').classList.add('show');
+}
+
+function editCountdown(index){
+    editingCdIndex = index;
+    const cd = state.countdowns[index];
+    document.getElementById('modal-countdown-title').textContent = '编辑倒数日';
+    document.getElementById('cd-name').value = cd.name;
+    document.getElementById('cd-date').value = cd.date;
+    document.getElementById('btn-cd-delete').style.display = '';
+    document.getElementById('modal-countdown').classList.add('show');
+}
+
+function saveCountdown(){
+    const name = document.getElementById('cd-name').value.trim();
+    const date = document.getElementById('cd-date').value;
+    if(!name || !date) return;
+    if(editingCdIndex >= 0){
+        state.countdowns[editingCdIndex] = {name,date};
+    } else {
+        state.countdowns.push({name,date});
+    }
+    saveState();
+    document.getElementById('modal-countdown').classList.remove('show');
+    renderCountdowns();
+}
+
+function deleteCountdown(){
+    if(editingCdIndex >= 0){
+        state.countdowns.splice(editingCdIndex,1);
+        saveState();
+        document.getElementById('modal-countdown').classList.remove('show');
+        renderCountdowns();
+    }
+}
+
+// ==================== 每日重置 ====================
+function checkDayReset(){
+    const td = today();
+    if(state.lastDate && state.lastDate !== td){
+        const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+        const yd = yesterday.getFullYear()+'-'+String(yesterday.getMonth()+1).padStart(2,'0')+'-'+String(yesterday.getDate()).padStart(2,'0');
+        if(state.lastDate === yd){
+            state.streak++; // 连续
+        } else {
+            state.streak = 1; // 中断
+        }
+        state.lastDate = td;
+        saveState();
+    }
+    if(!state.lastDate){
+        state.lastDate = td;
+        state.streak = 1;
+        saveState();
+    }
+}
+
+// ==================== 初始化 ====================
+function init(){
+    loadState();
+    checkDayReset();
+
+    // 底部导航
+    document.querySelectorAll('.nav-btn').forEach(btn=>{
+        btn.addEventListener('click',()=>navigate(btn.dataset.page));
+    });
+
+    // 主页按钮
+    document.getElementById('btn-start-study').addEventListener('click',()=>{
+        if(state.words.length===0){
+            alert('请先导入单词');
+            navigate('import');
+            return;
+        }
+        if(state.index > 0 && state.index < state.order.length){
+            document.getElementById('modal-start').classList.add('show');
+        } else {
+            startNormalStudy(false);
+        }
+    });
+
+    document.getElementById('btn-continue').addEventListener('click',()=>{
+        document.getElementById('modal-start').classList.remove('show');
+        startNormalStudy(false);
+    });
+
+    document.getElementById('btn-restart').addEventListener('click',()=>{
+        document.getElementById('modal-start').classList.remove('show');
+        startNormalStudy(true);
+    });
+
+    document.getElementById('btn-wrong-review').addEventListener('click',()=>{
+        const wrongs = Object.values(state.wrong);
+        if(wrongs.length===0){
+            alert('暂无错词');
+            return;
+        }
+        startWrongReview();
+    });
+
+    // 学习页按钮
+    document.getElementById('btn-study-back').addEventListener('click',()=>{
+        navigate('home');
+    });
+    document.getElementById('btn-reveal').addEventListener('click',revealWord);
+    document.getElementById('btn-correct').addEventListener('click',()=>answerWord(true));
+    document.getElementById('btn-wrong').addEventListener('click',()=>answerWord(false));
+    document.getElementById('btn-speak').addEventListener('click',()=>{
+        const en = document.getElementById('word-en').textContent;
+        if(en && en!=='完成！' && en!=='没有单词') speakWord(en);
+    });
+
+    // 错词本按钮
+    document.getElementById('btn-wrong-review2').addEventListener('click',startWrongReview);
+
+    // 倒数日
+    document.getElementById('btn-add-countdown').addEventListener('click',addCountdown);
+    document.getElementById('btn-cd-save').addEventListener('click',saveCountdown);
+    document.getElementById('btn-cd-cancel').addEventListener('click',()=>{
+        document.getElementById('modal-countdown').classList.remove('show');
+    });
+    document.getElementById('btn-cd-delete').addEventListener('click',deleteCountdown);
+
+    // 导入
+    let parsedWords = [];
+    document.getElementById('btn-parse').addEventListener('click',()=>{
+        const text = document.getElementById('import-text').value.trim();
+        if(!text){alert('请粘贴文本');return;}
+        parsedWords = parseWordText(text);
+        if(parsedWords.length===0){
+            alert('未识别到单词，请检查格式：每行"英文 中文"（空格分隔）');
+            return;
+        }
+        document.getElementById('import-count').textContent = `识别到 ${parsedWords.length} 个单词`;
+        document.getElementById('import-words').innerHTML = parsedWords.slice(0,50).map(w=>
+            `<div class="word-row"><span class="w-en">${esc(w.en)}</span><span class="w-zh">${esc(w.zh)}</span></div>`
+        ).join('') + (parsedWords.length>50 ? `<p class="text-tertiary mt-sm">……还有 ${parsedWords.length-50} 个</p>` : '');
+        document.getElementById('import-preview').style.display = 'block';
+        document.getElementById('btn-import-confirm').style.display = '';
+    });
+
+    document.getElementById('btn-load-demo').addEventListener('click',()=>{
+        document.getElementById('import-text').value = BUILTIN_WORDS.map(w=>w.en+' '+w.zh).join('\n');
+    });
+
+    document.getElementById('btn-clear-preview').addEventListener('click',()=>{
+        parsedWords = [];
+        document.getElementById('import-preview').style.display = 'none';
+        document.getElementById('btn-import-confirm').style.display = 'none';
+    });
+
+    document.getElementById('btn-import-confirm').addEventListener('click',()=>{
+        if(parsedWords.length===0) return;
+        state.words = parsedWords;
+        state.order = shuffle(parsedWords.map((_,i)=>i));
+        state.index = 0;
+        saveState();
+        syncRefChecked(); // 同步参考词库勾选
+        document.getElementById('import-preview').style.display = 'none';
+        document.getElementById('btn-import-confirm').style.display = 'none';
+        document.getElementById('import-text').value = '';
+        alert(`已导入 ${parsedWords.length} 个单词`);
+        navigate('home');
+    });
+
+    // 点击弹窗遮罩关闭
+    document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+        overlay.addEventListener('click',function(e){
+            if(e.target===this) this.classList.remove('show');
+        });
+    });
+
+    // 完成弹窗按钮
+    document.getElementById('btn-complete-restart').addEventListener('click',()=>{
+        document.getElementById('modal-complete').classList.remove('show');
+        studyMode==='wrong-review' ? startWrongReview() : startNormalStudy(true);
+    });
+    document.getElementById('btn-complete-wrong').addEventListener('click',()=>{
+        document.getElementById('modal-complete').classList.remove('show');
+        if(Object.keys(state.wrong).length>0) startWrongReview();
+        else navigate('home');
+    });
+    document.getElementById('btn-complete-home').addEventListener('click',()=>{
+        document.getElementById('modal-complete').classList.remove('show');
+        navigate('home');
+    });
+
+    // 参考词库
+    loadRefWords();
+
+    document.getElementById('btn-ref-import-toggle').addEventListener('click',()=>{
+        const block = document.getElementById('ref-import-block');
+        block.style.display = block.style.display==='none' ? 'block' : 'none';
+    });
+
+    let refParsedWords = [];
+    document.getElementById('btn-ref-parse').addEventListener('click',()=>{
+        const text = document.getElementById('ref-import-text').value.trim();
+        if(!text){alert('请粘贴文本');return;}
+        refParsedWords = parseWordText(text);
+        if(refParsedWords.length===0){alert('未识别到单词');return;}
+        // 追加到参考词库
+        const existing = new Set(refWords.map(w=>w.en.toLowerCase()));
+        let added = 0;
+        for(const w of refParsedWords){
+            if(!existing.has(w.en.toLowerCase())){
+                refWords.push({en:w.en,zh:w.zh,inMain:false});
+                existing.add(w.en.toLowerCase());
+                added++;
+            }
+        }
+        saveRefWords();
+        syncRefChecked();
+        renderRefPage();
+        document.getElementById('ref-import-text').value = '';
+        alert(`新增 ${added} 个，参考词库共 ${refWords.length} 个`);
+    });
+
+    document.getElementById('btn-ref-replace').addEventListener('click',()=>{
+        const text = document.getElementById('ref-import-text').value.trim();
+        if(!text){alert('请粘贴文本');return;}
+        refParsedWords = parseWordText(text);
+        if(refParsedWords.length===0){alert('未识别到单词');return;}
+        if(!confirm('替换将清空现有参考词库，用新列表覆盖。确定？')) return;
+        refWords = refParsedWords.map(w=>({en:w.en,zh:w.zh,inMain:false}));
+        saveRefWords();
+        syncRefChecked();
+        renderRefPage();
+        document.getElementById('ref-import-text').value = '';
+        alert(`已替换，共 ${refWords.length} 个`);
+    });
+
+    document.getElementById('btn-ref-clear').addEventListener('click',()=>{
+        if(!confirm('确定清空参考词库？')) return;
+        refWords = [];
+        saveRefWords();
+        renderRefPage();
+        document.getElementById('ref-import-text').value = '';
+    });
+
+    // 预加载语音
+    if('speechSynthesis' in window){
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = ()=>window.speechSynthesis.getVoices();
+    }
+
+    // 初始渲染
+    renderHome();
+}
+
+function startNormalStudy(reshuffle){
+    studyMode = 'normal';
+    if(reshuffle || state.order.length === 0){
+        state.order = shuffle(state.words.map((_,i)=>i));
+    }
+    state.index = 0;
+    state.roundResults = [];
+    saveState();
+    navigate('study');
+}
+
+function startWrongReview(){
+    studyMode = 'wrong-review';
+    state.index = 0;
+    state.roundResults = [];
+    saveState();
+    navigate('study');
+}
+
+// ==================== Service Worker ====================
+if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(regs=>regs.forEach(r=>r.unregister())).catch(()=>{});}
+
+// ==================== PWA Manifest ====================
+(function(){
+    const m = {
+        name:'单词记忆',
+        short_name:'单词记忆',
+        start_url:'.',
+        display:'standalone',
+        background_color:'#1a0f2e',
+        theme_color:'#1a0f2e',
+        icons:[{
+            src:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect x="32" y="32" width="448" height="448" rx="100" fill="#1a0f2e"/><path d="M210 130 L350 160 L290 240 L170 210 Z" fill="#b993ef"/><path d="M210 130 L170 210 L130 280 L160 180 Z" fill="#8d61c9"/><path d="M170 210 L290 240 L250 390 L130 280 Z" fill="#59358c"/><path d="M290 240 L350 160 L400 300 L250 390 Z" fill="#351e5e"/><path d="M350 160 L410 220 L400 300 Z" fill="#492b7c"/></svg>'),
+            sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'
+        }]
+    };
+    const blob = new Blob([JSON.stringify(m)],{type:'application/json'});
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = URL.createObjectURL(blob);
+    document.head.appendChild(link);
+})();
+
+// 启动
+init();
+</script>
+
+</body>
+</html>
