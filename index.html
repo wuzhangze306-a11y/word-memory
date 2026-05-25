@@ -25,6 +25,8 @@
     --red-bg: rgba(248,113,113,0.12);
     --blue: #60a5fa;
     --blue-bg: rgba(96,165,250,0.12);
+    --purple: #a78bfa;
+    --purple-bg: rgba(167,139,250,0.12);
     --radius: 12px;
     --radius-sm: 8px;
     --font: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans SC",sans-serif;
@@ -176,6 +178,7 @@ input,textarea{font-family:var(--font);color:var(--text);-webkit-user-select:tex
 .ref-word .ref-zh{color:var(--text2)}
 .ref-word .ref-check{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px}
 .ref-word.checked .ref-check{background:var(--green);color:#0f0f0f}
+.ref-word.related .ref-check{background:var(--purple);color:#0f0f0f}
 .ref-word.unchecked .ref-check{border:1px solid var(--border)}
 .ref-import-area{width:100%;min-height:120px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:13px;color:var(--text);resize:vertical;line-height:1.6}
 .ref-import-area:focus{outline:none;border-color:var(--blue)}
@@ -6440,8 +6443,19 @@ function saveRefWords(){
     catch(e){ alert('存储空间不足'); }
 }
 
+// 简单词根提取：去掉常见后缀
+function getStem(word){
+    const suffixes = ['tion','sion','ment','ness','ful','less','able','ible','ous','ive','ing','ed','er','est','ly','al','ic','ist','ism','ship','hood','ty','ity','ize','ise','en','es','s','ure','age','ance','ence','ant','ent','ory','ary','dom'];
+    const w = word.toLowerCase();
+    for(const s of suffixes){
+        if(w.endsWith(s) && w.length - s.length >= 3){
+            return w.slice(0, -s.length);
+        }
+    }
+    return w;
+}
+
 function syncRefChecked(){
-    // 将 A 库中的单词在 B 库中标记为已收录
     const mainSet = new Set(state.words.map(w=>w.en.toLowerCase()));
     let changed = false;
     for(const r of refWords){
@@ -6466,25 +6480,42 @@ function renderRefPage(){
     }
     emptyEl.style.display = 'none';
 
+    // 构建 A 库词根集合
+    const mainStems = new Set();
+    for(const w of state.words){
+        mainStems.add(getStem(w.en));
+    }
+
+    // 标记关联词：未收录但其词根已被 A 库覆盖
+    for(const r of refWords){
+        if(!r.inMain && mainStems.has(getStem(r.en))){
+            r._related = true;
+        } else {
+            r._related = false;
+        }
+    }
+
     const checked = refWords.filter(r=>r.inMain).length;
-    coverageEl.textContent = `已覆盖 ${checked}/${refWords.length}`;
+    const related = refWords.filter(r=>r._related).length;
+    coverageEl.textContent = `已覆盖 ${checked}/${refWords.length}` + (related>0 ? ` (+${related} 关联)` : '');
 
     // 按首字母分组
     const groups = {};
     for(const r of refWords){
         const letter = r.en[0].toUpperCase();
-        if(!groups[letter]) groups[letter] = {checked:[],unchecked:[]};
-        groups[letter][r.inMain?'checked':'unchecked'].push(r);
+        if(!groups[letter]) groups[letter] = {checked:[],related:[],unchecked:[]};
+        if(r.inMain) groups[letter].checked.push(r);
+        else if(r._related) groups[letter].related.push(r);
+        else groups[letter].unchecked.push(r);
     }
     const letters = Object.keys(groups).sort();
 
     let html = '';
     for(const letter of letters){
         const g = groups[letter];
-        const total = g.checked.length + g.unchecked.length;
+        const total = g.checked.length + g.related.length + g.unchecked.length;
         html += `<div class="ref-group">
             <div class="ref-group-header"><span class="ref-letter">${letter}</span><span class="ref-count">${g.checked.length}/${total}</span></div>`;
-        // 已收录
         if(g.checked.length>0){
             html += `<div class="ref-subsection"><div class="ref-subtitle">已收录 (${g.checked.length})</div>`;
             for(const w of g.checked.sort((a,b)=>a.en.localeCompare(b.en))){
@@ -6492,7 +6523,13 @@ function renderRefPage(){
             }
             html += `</div>`;
         }
-        // 未收录
+        if(g.related.length>0){
+            html += `<div class="ref-subsection"><div class="ref-subtitle" style="color:var(--purple)">关联词根 (${g.related.length})</div>`;
+            for(const w of g.related.sort((a,b)=>a.en.localeCompare(b.en))){
+                html += `<div class="ref-word related"><span class="ref-check">~</span><span class="ref-en">${esc(w.en)}</span><span class="ref-zh">${esc(w.zh)}</span></div>`;
+            }
+            html += `</div>`;
+        }
         if(g.unchecked.length>0){
             html += `<div class="ref-subsection"><div class="ref-subtitle">未收录 (${g.unchecked.length})</div>`;
             for(const w of g.unchecked.sort((a,b)=>a.en.localeCompare(b.en))){
