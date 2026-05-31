@@ -85,7 +85,7 @@ roundResults: ["correct"|"wrong"]  // 当前轮次每题结果
 
 **连胜计算**: `checkDayReset()` — 跨天检测，连续天数 +1 或中断归零。
 
-**PWA**: manifest 通过 Blob URL 内联生成，SW 已移除（曾导致缓存更新问题）。`apple-touch-icon` 和 manifest icon 使用内联 SVG（紫色多边形图案）。
+**PWA**: manifest 使用静态 `manifest.json` 文件（之前用 Blob URL 内联生成，iOS Safari 不支持）。SW (`sw.js`) 注册在 `init()` 中，缓存策略为 cache-first + 后台更新。
 
 ### 内置数据
 
@@ -95,3 +95,100 @@ roundResults: ["correct"|"wrong"]  // 当前轮次每题结果
 ### 设计风格
 
 暗色主题，参考 Linear/Vercel 审美。CSS 变量定义在 `:root`，配色：背景 `#0f0f0f`，卡片 `#1a1a1a`，绿色答对 `#4ade80`，红色答错 `#f87171`，紫色关联 `#a78bfa`。移动端优先，按钮至少 44px 高。
+
+## 源文件结构（拆分后）
+
+源码拆分为独立文件以便维护，通过 `build.js` 合并为单文件部署：
+
+```
+index.html          # HTML 壳（含外部引用），由 split.js 生成
+css/styles.css      # Codex 域 — 所有视觉样式
+js/data.js          # CC 域 — 内置单词数据（BUILTIN_WORDS + BUILTIN_REF_WORDS）
+js/state.js         # CC 域 — 数据模型 + localStorage 序列化
+js/utils.js         # CC 域 — 工具函数（getStem, shuffle, parseWordText 等）
+js/app.js           # CC 域 — UI 渲染 + 事件处理 + init()
+dist/index.html     # 构建产物 — 单文件，由 build.js 合并生成
+manifest.json       # PWA 清单（静态文件，iOS 兼容）
+sw.js               # Service Worker（离线缓存）
+build.js            # 构建脚本：读取源文件 → 合并为 dist/index.html + 复制到根目录
+split.js            # 拆分脚本：从单文件 index.html 拆出 css/js 源文件
+```
+
+详细的所有权边界见 `INTERFACE_CONTRACT.md`。
+
+## 构建流程
+
+```bash
+# 拆分（仅当从旧单文件开始时需要，一般只需要一次）
+node split.js
+
+# 构建（每次修改源文件后）
+node build.js
+```
+
+`build.js` 做了三件事：
+1. 读取 `css/styles.css` 并内联到 `<style>` 标签
+2. 读取 `js/*.js` 按依赖顺序合并到 `<script>` 标签
+3. 将 Blob URL manifest 脚本替换为 `<link rel="manifest" href="manifest.json">`（iOS 兼容）
+4. 输出到 `dist/index.html`，并复制到根目录 `index.html`（GitHub Pages 从这里提供服务）
+
+## 踩过的坑（错误记录）
+
+### ❌ Blob URL Manifest → iOS Safari 不支持
+
+**现象**：手机端（特别是 iPhone）PWA 无法安装，manifest 不生效。
+
+**原因**：manifest 通过 JavaScript `URL.createObjectURL(blob)` 动态注入，iOS Safari 不支持 Blob URL 的 manifest 链接。manifest 必须是服务端返回的真实文件。
+
+**修复**：改为静态 `<link rel="manifest" href="manifest.json">`，`manifest.json` 部署在根目录。
+
+### ❌ 无 Service Worker → 完全无离线能力
+
+**现象**：用户在网络不稳定时打不开应用。之前 SW 因"缓存更新问题"被移除，但移除后 PWA 退化为普通网页。
+
+**原因**：代码中没有任何 `navigator.serviceWorker.register()` 调用，`sw.js` 文件写了但是死代码。`build.js` 还显式检查禁止 SW 注册（`['serviceWorker', false]`）。
+
+**修复**：
+- `js/app.js` 的 `init()` 中添加 `navigator.serviceWorker.register('sw.js')`
+- `build.js` 中移除 serviceWorker 禁止检查
+- SW 缓存策略：cache-first + 后台更新，缓存 `index.html` + `manifest.json`
+
+### ❌ SW 预缓存列表与实际部署文件不匹配
+
+**现象**：SW install 时所有预缓存请求静默失败。
+
+**原因**：`sw.js` 中的 `ASSETS` 列表写的是源文件路径（`css/styles.css`, `js/data.js` 等），但这些文件在部署时不存在（部署的是合并后的单文件 `index.html`）。
+
+**修复**：`ASSETS` 改为 `['.', 'index.html', 'manifest.json']`，即部署时的实际文件。
+
+### ❌ `background-attachment: fixed` → iOS Safari 滚动卡顿
+
+**现象**：iOS 上滚动页面时卡顿、不跟手。
+
+**原因**：`body` 上设置了 `background-attachment: fixed`，这在 iOS Safari 上是已知的性能问题，会触发昂贵的重绘。
+
+**修复**：移除 `background-attachment: fixed`，改为 `overscroll-behavior-y: contain`。
+
+### ❌ 输入框字号 < 16px → iOS Safari 自动缩放
+
+**现象**：在 iPhone 上点击输入框时页面会自动放大。
+
+**原因**：iOS Safari 对 `font-size < 16px` 的表单元素会触发自动缩放（accessibility 行为）。`textarea` 和 `input` 默认字号 13-14px。
+
+**修复**：`input, textarea` 统一设置 `font-size: 16px`。
+
+### ⚠️ `user-select: none` 阻止了单词复制
+
+**现象**：学习单词时无法长按选中英文单词进行复制/翻译。
+
+**原因**：`body` 上全局设置了 `user-select: none`（防止误触），但 `.word-en` 展示区也被覆盖。
+
+**修复**：`.word-en` 添加 `-webkit-user-select: text; user-select: text`。
+
+### ⚠️ Git 推送依赖代理
+
+**现象**：`git push` 报 `Failed to connect to github.com port 443`。
+
+**原因**：git 配置了 `http.proxy = http://127.0.0.1:17299`，但代理软件（Clash/V2Ray）未运行。
+
+**处理**：临时 `git config --global --unset http.proxy` 后推送成功，然后恢复代理配置。或启动代理软件。
