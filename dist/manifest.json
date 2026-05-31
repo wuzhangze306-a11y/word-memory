@@ -1,0 +1,26 @@
+{
+  "name": "单词记忆",
+  "short_name": "单词记忆",
+  "description": "离线单词记忆 PWA",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F2F7",
+  "theme_color": "#F2F2F7",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%237b5cfc'/><stop offset='100%25' stop-color='%233b2d8a'/></linearGradient></defs><rect x='32' y='32' width='448' height='448' rx='112' fill='%230a0a14' stroke='url(%23g)' stroke-width='8'/><path d='M200 140 L360 170 L290 260 L160 220 Z' fill='%23a78bfa' opacity='0.9'/><path d='M200 140 L160 220 L120 300 L150 190 Z' fill='%237c5ce0' opacity='0.85'/><path d='M160 220 L290 260 L250 400 L120 300 Z' fill='%235535c0' opacity='0.8'/><path d='M290 260 L360 170 L420 310 L250 400 Z' fill='%2335208a' opacity='0.75'/><path d='M360 170 L420 230 L420 310 Z' fill='%234b30b0' opacity='0.8'/><circle cx='256' cy='256' r='80' fill='none' stroke='%23a78bfa' stroke-width='2' opacity='0.3'/><text x='256' y='390' font-family='system-ui' font-size='36' font-weight='700' fill='%23a78bfa' text-anchor='middle' opacity='0.6'>A-Z</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%237b5cfc'/><stop offset='100%25' stop-color='%233b2d8a'/></linearGradient></defs><rect x='8' y='8' width='176' height='176' rx='40' fill='%230a0a14' stroke='url(%23g)' stroke-width='4'/><path d='M72 52 L136 64 L108 98 L56 82 Z' fill='%23a78bfa' opacity='0.9'/><path d='M72 52 L56 82 L42 114 L54 70 Z' fill='%237c5ce0' opacity='0.85'/><path d='M56 82 L108 98 L92 154 L42 114 Z' fill='%235535c0' opacity='0.8'/><path d='M108 98 L136 64 L158 118 L92 154 Z' fill='%2335208a' opacity='0.75'/><path d='M136 64 L158 88 L158 118 Z' fill='%234b30b0' opacity='0.8'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
