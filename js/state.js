@@ -29,6 +29,8 @@ function loadState(){
             if(!Array.isArray(state.order)) state.order = [];
             if(typeof state.index !== 'number') state.index = 0;
             if(!state.wrong || typeof state.wrong !== 'object') state.wrong = {};
+            // 错词数据模型迁移：旧 {en,zh,count} → 新格式
+            migrateWrongWords(state.wrong);
             if(!state.stats || typeof state.stats !== 'object') state.stats = {};
             if(!Array.isArray(state.countdowns)) state.countdowns = [];
             if(typeof state.lastDate !== 'string') state.lastDate = '';
@@ -53,6 +55,66 @@ function saveState(){
         // localStorage 满，尝试清理旧数据
         alert('存储空间不足，请清理浏览器数据');
     }
+}
+
+// ==================== 错词数据迁移 ====================
+function migrateWrongWords(wrong){
+    const td = today();
+    for(const key of Object.keys(wrong)){
+        const w = wrong[key];
+        if(typeof w.totalCount !== 'number'){
+            w.totalCount = w.count || 0;
+            w.reviewCount = w.count || 0;
+            w.firstWrong = w.firstWrong || td;
+            w.lastWrong = w.lastWrong || td;
+            w.wrongDates = w.wrongDates || {};
+            if(!w.wrongDates[td] && w.totalCount > 0){
+                w.wrongDates[td] = w.totalCount;
+            }
+            w.ebbinghaus = w.ebbinghaus || {
+                stage: 0,
+                intervals: EBBINGHAUS_INTERVALS,
+                nextReview: td,
+                lastReview: null
+            };
+        }
+    }
+}
+
+// ==================== 艾宾浩斯辅助函数 ====================
+function getEbbinghausDueWords(){
+    const td = today();
+    const due = [];
+    for(const key of Object.keys(state.wrong)){
+        const w = state.wrong[key];
+        const eb = w.ebbinghaus;
+        if(eb && eb.stage < eb.intervals.length && eb.nextReview <= td && w.reviewCount > 0){
+            due.push(w);
+        }
+    }
+    return due.sort((a,b)=>b.totalCount-a.totalCount);
+}
+
+function advanceEbbinghaus(word, correct){
+    const eb = word.ebbinghaus;
+    if(!eb) return;
+    const td = today();
+    eb.lastReview = td;
+    if(correct){
+        eb.stage++;
+        if(eb.stage < eb.intervals.length){
+            eb.nextReview = addDays(td, eb.intervals[eb.stage]);
+        }
+    } else {
+        eb.stage = 0;
+        eb.nextReview = addDays(td, eb.intervals[0]);
+    }
+}
+
+function addDays(dateStr, days){
+    const d = new Date(dateStr);
+    d.setDate(d.getDate() + days);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
 // ==================== 参考词库 (B) ====================

@@ -14,6 +14,9 @@ function getStem(word){
 }
 
 // Fisher-Yates 随机化
+// ==================== 艾宾浩斯常量 ====================
+const EBBINGHAUS_INTERVALS = [1, 2, 4, 7, 15, 30]; // 天
+
 // ==================== 工具函数 ====================
 function shuffle(arr){
     const a = [...arr];

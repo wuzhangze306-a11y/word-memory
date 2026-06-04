@@ -415,6 +415,26 @@ input,textarea{font-family:var(--font);color:var(--text);-webkit-user-select:tex
 }
 .countdown-add:active{color:var(--purple);border-color:rgba(142,111,245,.3);transform:scale(.98)}
 
+/* ── Wrong Tabs ── */
+.wrong-tabs{
+    display:flex;gap:4px;margin:14px 0 4px;
+    background:rgba(0,0,0,0.03);border-radius:12px;padding:3px;
+    overflow-x:auto;-webkit-overflow-scrolling:touch;
+}
+.wrong-tab{
+    flex:1;min-width:0;white-space:nowrap;
+    background:none;border:none;color:var(--text2);
+    font-size:13px;font-weight:500;padding:8px 10px;
+    border-radius:10px;cursor:pointer;
+    transition:all .25s;-webkit-tap-highlight-color:transparent;
+}
+.wrong-tab.active{
+    background:#fff;color:var(--purple);font-weight:600;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+.wrong-tab-content{display:none}
+.wrong-tab-content.active{display:block}
+
 /* ── Wrong List ── */
 .wrong-item{
     display:flex;align-items:center;justify-content:space-between;
@@ -427,9 +447,36 @@ input,textarea{font-family:var(--font);color:var(--text);-webkit-user-select:tex
 .wrong-zh{font-size:13px;color:var(--text3);margin-top:4px}
 .wrong-count{
     font-size:12px;color:var(--red);background:var(--red-bg);
-    padding:4px 12px;border-radius:12px;font-weight:600;
+    padding:4px 10px;border-radius:12px;font-weight:600;
     border:1px solid rgba(255,59,48,.12);
+    flex-shrink:0;white-space:nowrap;
 }
+.wrong-total-count{
+    font-size:11px;color:var(--text2);background:rgba(0,0,0,0.04);
+    padding:3px 10px;border-radius:10px;font-weight:500;
+    flex-shrink:0;white-space:nowrap;
+}
+.wrong-item-meta{
+    display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.wrong-eb-stage{
+    font-size:11px;color:var(--purple);background:var(--purple-bg);
+    padding:3px 8px;border-radius:8px;font-weight:500;
+    white-space:nowrap;
+}
+.wrong-eb-date{
+    font-size:11px;color:var(--text3);
+    white-space:nowrap;
+}
+.wrong-section-title{
+    font-size:12px;font-weight:600;color:var(--text3);
+    text-transform:uppercase;letter-spacing:.6px;
+    padding:12px 20px 8px;
+}
+.wrong-section-info{
+    text-align:center;padding:16px;color:var(--text2);font-size:13px;
+}
+.wrong-section-info strong{color:var(--purple)}
 
 /* ── Stats Table ── */
 .stat-table{width:100%;border-collapse:collapse}
@@ -695,7 +742,7 @@ input,textarea{font-family:var(--font);color:var(--text);-webkit-user-select:tex
     border-bottom:.5px solid rgba(0,0,0,.05);
 }
 .wrong-item-inner{
-    display:flex;align-items:center;justify-content:space-between;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
     padding:16px 20px;transition:transform .25s cubic-bezier(.22,1,.36,1);
     background:transparent;position:relative;z-index:1;
 }
@@ -887,17 +934,44 @@ body {
 <!-- ========== 错词本 ========== -->
 <div id="page-wrong" class="page">
     <div class="header"><h1>错词本</h1><button class="btn btn-ghost btn-small hidden" id="btn-wrong-clear">清空</button></div>
-    <div class="filter-bar hidden" id="wrong-filter">
-        <button class="filter-chip active" data-min="0">全部</button>
-        <button class="filter-chip" data-min="3">错3次+</button>
-        <button class="filter-chip" data-min="5">错5次+</button>
+    <div class="wrong-tabs" id="wrong-tabs">
+        <button class="wrong-tab active" data-tab="today">今日错词</button>
+        <button class="wrong-tab" data-tab="all">总错词本</button>
+        <button class="wrong-tab" data-tab="review">错词复习</button>
+        <button class="wrong-tab" data-tab="ebbinghaus">艾宾浩斯</button>
     </div>
-    <div id="wrong-list"></div>
+    <!-- 今日错词 -->
+    <div class="wrong-tab-content active" id="wrong-tab-today">
+        <div id="wrong-today-list"></div>
+        <div id="wrong-today-empty" class="wrong-section-info hidden">今日暂无错词 🎉</div>
+        <button class="btn btn-primary mt-lg hidden" id="btn-wrong-today-review">复习今日错词</button>
+    </div>
+    <!-- 总错词本 -->
+    <div class="wrong-tab-content" id="wrong-tab-all">
+        <div class="filter-bar" id="wrong-filter">
+            <button class="filter-chip active" data-min="0">全部</button>
+            <button class="filter-chip" data-min="3">错3次+</button>
+            <button class="filter-chip" data-min="5">错5次+</button>
+        </div>
+        <div id="wrong-all-list"></div>
+        <div id="wrong-all-empty" class="wrong-section-info hidden">暂无错词，继续加油 💪</div>
+    </div>
+    <!-- 错词复习 -->
+    <div class="wrong-tab-content" id="wrong-tab-review">
+        <div class="wrong-section-info" id="wrong-review-info"></div>
+        <div id="wrong-review-list"></div>
+        <button class="btn btn-primary mt-lg hidden" id="btn-wrong-review2">复习全部错词</button>
+    </div>
+    <!-- 艾宾浩斯 -->
+    <div class="wrong-tab-content" id="wrong-tab-ebbinghaus">
+        <div class="wrong-section-info" id="wrong-eb-info"></div>
+        <div id="wrong-eb-list"></div>
+        <button class="btn btn-primary mt-lg hidden" id="btn-wrong-eb-review">艾宾浩斯复习</button>
+    </div>
     <div id="wrong-empty" class="empty hidden">
         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.4"><circle cx="12" cy="12" r="10"/><path d="M9 9l6 6M15 9l-6 6"/></svg>
         <p>暂无错词<br>继续加油</p>
     </div>
-    <button class="btn btn-primary mt-lg hidden" id="btn-wrong-review2">专项复习错词</button>
 </div>
 
 <!-- ========== 统计页 ========== -->
@@ -6976,6 +7050,8 @@ function loadState(){
             if(!Array.isArray(state.order)) state.order = [];
             if(typeof state.index !== 'number') state.index = 0;
             if(!state.wrong || typeof state.wrong !== 'object') state.wrong = {};
+            // 错词数据模型迁移：旧 {en,zh,count} → 新格式
+            migrateWrongWords(state.wrong);
             if(!state.stats || typeof state.stats !== 'object') state.stats = {};
             if(!Array.isArray(state.countdowns)) state.countdowns = [];
             if(typeof state.lastDate !== 'string') state.lastDate = '';
@@ -7000,6 +7076,67 @@ function saveState(){
         // localStorage 满，尝试清理旧数据
         alert('存储空间不足，请清理浏览器数据');
     }
+}
+
+// ==================== 错词数据迁移 ====================
+function migrateWrongWords(wrong){
+    const td = today();
+    for(const key of Object.keys(wrong)){
+        const w = wrong[key];
+        // 旧格式 {en,zh,count} → 新格式
+        if(typeof w.totalCount !== 'number'){
+            w.totalCount = w.count || 0;
+            w.reviewCount = w.count || 0;
+            w.firstWrong = w.firstWrong || td;
+            w.lastWrong = w.lastWrong || td;
+            w.wrongDates = w.wrongDates || {};
+            if(!w.wrongDates[td] && w.totalCount > 0){
+                w.wrongDates[td] = w.totalCount;
+            }
+            w.ebbinghaus = w.ebbinghaus || {
+                stage: 0,
+                intervals: EBBINGHAUS_INTERVALS,
+                nextReview: td,
+                lastReview: null
+            };
+        }
+    }
+}
+
+// ==================== 艾宾浩斯辅助函数 ====================
+function getEbbinghausDueWords(){
+    const td = today();
+    const due = [];
+    for(const key of Object.keys(state.wrong)){
+        const w = state.wrong[key];
+        const eb = w.ebbinghaus;
+        if(eb && eb.stage < eb.intervals.length && eb.nextReview <= td && w.reviewCount > 0){
+            due.push(w);
+        }
+    }
+    return due.sort((a,b)=>b.totalCount-a.totalCount);
+}
+
+function advanceEbbinghaus(word, correct){
+    const eb = word.ebbinghaus;
+    if(!eb) return;
+    const td = today();
+    eb.lastReview = td;
+    if(correct){
+        eb.stage++;
+        if(eb.stage < eb.intervals.length){
+            eb.nextReview = addDays(td, eb.intervals[eb.stage]);
+        }
+    } else {
+        eb.stage = 0;
+        eb.nextReview = addDays(td, eb.intervals[0]);
+    }
+}
+
+function addDays(dateStr, days){
+    const d = new Date(dateStr);
+    d.setDate(d.getDate() + days);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
 // ==================== 参考词库 (B) ====================
@@ -7049,6 +7186,9 @@ function getStem(word){
 }
 
 // Fisher-Yates 随机化
+// ==================== 艾宾浩斯常量 ====================
+const EBBINGHAUS_INTERVALS = [1, 2, 4, 7, 15, 30]; // 天
+
 // ==================== 工具函数 ====================
 function shuffle(arr){
     const a = [...arr];
@@ -7307,7 +7447,7 @@ function navigate(page){
     currentPage = page;
     if(page==='home') renderHome();
     if(page==='study') renderStudy();
-    if(page==='wrong'){ wrongFilterMin=0; renderWrongList(); }
+    if(page==='wrong'){ wrongFilterMin=0; wrongActiveTab='today'; renderWrongPage('today'); }
     if(page==='stats') renderStats();
     if(page==='import') renderImport();
     if(page==='ref'){
@@ -7361,12 +7501,25 @@ function renderCountdowns(){
 
 // ── 学习核心 ──
 // ==================== 学习渲染 ====================
-let studyMode = 'normal'; // 'normal' | 'wrong-review'
+let studyMode = 'normal'; // 'normal' | 'wrong-review' | 'today-wrong' | 'ebbinghaus'
 let revealed = false;
+
+const STUDY_MODE_LABELS = {
+    'normal': '学习',
+    'wrong-review': '错词复习',
+    'today-wrong': '今日错词',
+    'ebbinghaus': '艾宾浩斯'
+};
 
 function getStudyList(){
     if(studyMode==='wrong-review'){
-        return Object.values(state.wrong);
+        return Object.values(state.wrong).filter(w=>w.reviewCount > 0);
+    }
+    if(studyMode==='today-wrong'){
+        return Object.values(state.wrong).filter(w=>w.lastWrong === today());
+    }
+    if(studyMode==='ebbinghaus'){
+        return getEbbinghausDueWords();
     }
     return state.order.map(i=>state.words[i]);
 }
@@ -7389,7 +7542,7 @@ function renderStudy(){
         document.getElementById('btn-speak').classList.add('hidden');
         dotsEl.innerHTML = '';
         document.getElementById('progress-text').textContent = '';
-        document.getElementById('study-mode-label').textContent = studyMode==='wrong-review' ? '错词复习' : '学习';
+        document.getElementById('study-mode-label').textContent = STUDY_MODE_LABELS[studyMode] || '学习';
         return;
     }
     if(idx >= total){
@@ -7405,7 +7558,7 @@ function renderStudy(){
     document.getElementById('btn-reveal').classList.remove('hidden');
     document.getElementById('answer-btns').classList.add('hidden');
     document.getElementById('progress-text').textContent = (idx+1)+' / '+total;
-    document.getElementById('study-mode-label').textContent = studyMode==='wrong-review' ? '错词复习' : '学习';
+    document.getElementById('study-mode-label').textContent = STUDY_MODE_LABELS[studyMode] || '学习';
     // 渲染圆点指示器
     dotsEl.innerHTML = '';
     for(let i=0;i<total;i++){
@@ -7429,6 +7582,26 @@ function revealWord(){
     document.querySelector('.card-flip-inner').classList.add('flipped');
 }
 
+function ensureWrongEntry(en, zh){
+    if(!state.wrong[en]){
+        state.wrong[en] = {
+            en, zh,
+            totalCount: 0,
+            reviewCount: 0,
+            firstWrong: today(),
+            lastWrong: today(),
+            wrongDates: {},
+            ebbinghaus: {
+                stage: 0,
+                intervals: EBBINGHAUS_INTERVALS,
+                nextReview: addDays(today(), EBBINGHAUS_INTERVALS[0]),
+                lastReview: null
+            }
+        };
+    }
+    return state.wrong[en];
+}
+
 function answerWord(correct){
     if(!revealed) return;
     revealed = false; // 防止重复点击
@@ -7441,27 +7614,39 @@ function answerWord(correct){
     state.roundResults[state.index] = correct?'correct':'wrong';
 
     let removed = false;
+    const list = getStudyList();
+    const word = list[state.index];
+
     if(correct){
         state.stats[td].correct++;
-        if(studyMode==='wrong-review'){
-            const list = Object.values(state.wrong);
-            const word = list[state.index];
+        // 复习模式：减少 reviewCount
+        if(studyMode==='wrong-review' || studyMode==='today-wrong' || studyMode==='ebbinghaus'){
             if(word && state.wrong[word.en]){
-                state.wrong[word.en].count--;
-                if(state.wrong[word.en].count <= 0){
-                    delete state.wrong[word.en];
-                    removed = true;
+                state.wrong[word.en].reviewCount--;
+                if(state.wrong[word.en].reviewCount <= 0){
+                    state.wrong[word.en].reviewCount = 0;
+                    removed = true; // 从当前复习列表移除
+                }
+                // 艾宾浩斯阶段推进
+                if(studyMode==='ebbinghaus'){
+                    advanceEbbinghaus(state.wrong[word.en], true);
                 }
             }
         }
     } else {
-        const list = getStudyList();
-        const word = list[state.index];
         if(word){
-            if(!state.wrong[word.en]){
-                state.wrong[word.en] = {en:word.en,zh:word.zh,count:0};
+            const w = ensureWrongEntry(word.en, word.zh);
+            w.totalCount++;   // 只增不减
+            w.reviewCount++;  // 待复习也增加
+            w.lastWrong = td;
+            if(!w.wrongDates[td]) w.wrongDates[td] = 0;
+            w.wrongDates[td]++;
+            // 艾宾浩斯重置
+            if(studyMode==='ebbinghaus'){
+                advanceEbbinghaus(w, false);
+            } else if(!w.firstWrong || w.firstWrong > td){
+                w.firstWrong = td;
             }
-            state.wrong[word.en].count++;
         }
     }
 
@@ -7484,8 +7669,9 @@ function answerWord(correct){
 
     if(!removed) state.index++;
     const updatedList = getStudyList();
-    if(state.index >= updatedList.length && studyMode==='wrong-review'){
-        if(Object.keys(state.wrong).length > 0){
+    if(state.index >= updatedList.length && studyMode!=='normal'){
+        // 复习模式：自动循环
+        if(updatedList.length > 0){
             state.index = 0;
         }
     }
@@ -7541,45 +7727,137 @@ function showCompletion(){
 // ── 错词本 ──
 // ==================== 错词本渲染 ====================
 let wrongFilterMin = 0;
+let wrongActiveTab = 'today';
 
-function renderWrongList(minCount){
-    if(minCount !== undefined) wrongFilterMin = minCount;
-    const wrongs = Object.values(state.wrong).sort((a,b)=>b.count-a.count).filter(w=>w.count >= wrongFilterMin);
-    const listEl = document.getElementById('wrong-list');
-    const emptyEl = document.getElementById('wrong-empty');
-    const btnEl = document.getElementById('btn-wrong-review2');
-    const clearBtn = document.getElementById('btn-wrong-clear');
-    const filterBar = document.getElementById('wrong-filter');
+function renderWrongPage(tab){
+    if(tab) wrongActiveTab = tab;
     const allWrongs = Object.values(state.wrong);
+    const td = today();
+
+    // 更新 Tab 激活状态
+    document.querySelectorAll('#wrong-tabs .wrong-tab').forEach(b=>{
+        b.classList.toggle('active', b.dataset.tab === wrongActiveTab);
+    });
+    // 切换内容区
+    document.querySelectorAll('#page-wrong .wrong-tab-content').forEach(el=>{
+        el.classList.toggle('active', el.id === 'wrong-tab-'+wrongActiveTab);
+    });
+
+    const emptyEl = document.getElementById('wrong-empty');
+    const clearBtn = document.getElementById('btn-wrong-clear');
 
     if(allWrongs.length===0){
+        // 全部为空：显示空状态
+        document.querySelectorAll('#page-wrong .wrong-tab-content').forEach(el=>el.classList.remove('active'));
+        emptyEl.classList.remove('hidden');
+        clearBtn.classList.add('hidden');
+    } else {
+        emptyEl.classList.add('hidden');
+        clearBtn.classList.remove('hidden');
+        // 渲染各个 Tab
+        if(wrongActiveTab==='today') renderWrongToday(allWrongs, td);
+        else if(wrongActiveTab==='all') renderWrongAll(allWrongs);
+        else if(wrongActiveTab==='review') renderWrongReview(allWrongs);
+        else if(wrongActiveTab==='ebbinghaus') renderWrongEbbinghaus(td);
+    }
+}
+
+function makeWrongItemHTML(w, rightContent){
+    return `<div class="wrong-item-wrap" data-en="${esc(w.en)}">
+        <div class="wrong-item-inner">
+            <div><div class="wrong-en">${esc(w.en)}</div><div class="wrong-zh">${esc(w.zh)}</div></div>
+            ${rightContent}
+        </div>
+        <div class="wrong-swipe-del">删除</div>
+    </div>`;
+}
+
+function renderWrongToday(allWrongs, td){
+    const todayList = allWrongs.filter(w=>w.lastWrong===td);
+    const listEl = document.getElementById('wrong-today-list');
+    const emptyEl = document.getElementById('wrong-today-empty');
+    const btnEl = document.getElementById('btn-wrong-today-review');
+
+    if(todayList.length===0){
         listEl.innerHTML = '';
         emptyEl.classList.remove('hidden');
         btnEl.classList.add('hidden');
-        clearBtn.classList.add('hidden');
-        filterBar.classList.add('hidden');
     } else {
         emptyEl.classList.add('hidden');
         btnEl.classList.remove('hidden');
-        clearBtn.classList.remove('hidden');
-        filterBar.classList.remove('hidden');
-        listEl.innerHTML = wrongs.map(w=>`
-            <div class="wrong-item-wrap" data-en="${esc(w.en)}">
-                <div class="wrong-item-inner">
-                    <div><div class="wrong-en">${esc(w.en)}</div><div class="wrong-zh">${esc(w.zh)}</div></div>
-                    <span class="wrong-count">错${w.count}次</span>
-                </div>
-                <div class="wrong-swipe-del">删除</div>
-            </div>
-        `).join('');
-        if(wrongs.length===0 && allWrongs.length>0){
-            listEl.innerHTML = '<p class="text-tertiary" style="text-align:center;padding:32px">无匹配错词</p>';
-        }
+        listEl.innerHTML = todayList.sort((a,b)=>b.totalCount-a.totalCount).map(w=>
+            makeWrongItemHTML(w, `<span class="wrong-count">错${w.totalCount}次</span>`)
+        ).join('');
+    }
+}
+
+function renderWrongAll(allWrongs){
+    const filterBar = document.getElementById('wrong-filter');
+    filterBar.classList.remove('hidden');
+    const wrongs = allWrongs.filter(w=>w.totalCount >= wrongFilterMin).sort((a,b)=>b.totalCount-a.totalCount);
+    const listEl = document.getElementById('wrong-all-list');
+    const emptyEl = document.getElementById('wrong-all-empty');
+
+    if(wrongs.length===0 && allWrongs.length>0){
+        listEl.innerHTML = '<p class="text-tertiary" style="text-align:center;padding:32px">无匹配错词</p>';
+        emptyEl.classList.add('hidden');
+    } else {
+        emptyEl.classList.add('hidden');
+        listEl.innerHTML = wrongs.map(w=>
+            makeWrongItemHTML(w, `<span class="wrong-count">错${w.totalCount}次</span>`)
+        ).join('');
     }
     // update filter chips
     filterBar.querySelectorAll('.filter-chip').forEach(chip=>{
         chip.classList.toggle('active', parseInt(chip.dataset.min) === wrongFilterMin);
     });
+}
+
+function renderWrongReview(allWrongs){
+    const reviewable = allWrongs.filter(w=>w.reviewCount > 0).sort((a,b)=>b.totalCount-a.totalCount);
+    const listEl = document.getElementById('wrong-review-list');
+    const infoEl = document.getElementById('wrong-review-info');
+    const btnEl = document.getElementById('btn-wrong-review2');
+
+    infoEl.textContent = reviewable.length>0 ? `共 <strong>${reviewable.length}</strong> 个错词待复习` : '全部错词已复习完毕 🎉';
+    if(reviewable.length===0){
+        listEl.innerHTML = '';
+        btnEl.classList.add('hidden');
+    } else {
+        btnEl.classList.remove('hidden');
+        listEl.innerHTML = reviewable.map(w=>
+            makeWrongItemHTML(w, `<div class="wrong-item-meta">
+                <span class="wrong-count">错${w.totalCount}次</span>
+                <span class="wrong-total-count">待复习${w.reviewCount}次</span>
+            </div>`)
+        ).join('');
+    }
+}
+
+function renderWrongEbbinghaus(td){
+    const dueList = getEbbinghausDueWords();
+    const listEl = document.getElementById('wrong-eb-list');
+    const infoEl = document.getElementById('wrong-eb-info');
+    const btnEl = document.getElementById('btn-wrong-eb-review');
+
+    const stageNames = ['','1天后','2天后','4天后','7天后','15天后','30天后'];
+    infoEl.textContent = dueList.length>0 ? `今天有 <strong>${dueList.length}</strong> 个单词需要艾宾浩斯复习` : '今天没有需要复习的单词 📚';
+
+    if(dueList.length===0){
+        listEl.innerHTML = '';
+        btnEl.classList.add('hidden');
+    } else {
+        btnEl.classList.remove('hidden');
+        listEl.innerHTML = dueList.map(w=>{
+            const eb = w.ebbinghaus;
+            const stage = eb ? eb.stage : 0;
+            return makeWrongItemHTML(w, `<div class="wrong-item-meta">
+                <span class="wrong-eb-stage">阶段${stage+1}</span>
+                <span class="wrong-eb-date">下次${eb?eb.nextReview:''}</span>
+                <span class="wrong-count">错${w.totalCount}次</span>
+            </div>`);
+        }).join('');
+    }
 }
 
 
@@ -7702,7 +7980,7 @@ function init(){
 
     document.getElementById('btn-continue').addEventListener('click',()=>{
         document.getElementById('modal-start').classList.remove('show');
-        startNormalStudy(false);
+        startNormalStudy(false, true);
     });
 
     document.getElementById('btn-restart').addEventListener('click',()=>{
@@ -7711,12 +7989,12 @@ function init(){
     });
 
     document.getElementById('btn-wrong-review').addEventListener('click',()=>{
-        const wrongs = Object.values(state.wrong);
-        if(wrongs.length===0){
-            alert('暂无错词');
+        const reviewable = Object.values(state.wrong).filter(w=>w.reviewCount > 0);
+        if(reviewable.length===0){
+            alert('暂无待复习错词');
             return;
         }
-        startWrongReview();
+        startWrongReview('wrong-review');
     });
 
     // 学习页按钮
@@ -7731,31 +8009,39 @@ function init(){
         if(en && en!=='完成！' && en!=='没有单词') speakWord(en);
     });
 
-    // 错词本按钮
-    document.getElementById('btn-wrong-review2').addEventListener('click',startWrongReview);
+    // 错词本 — Tab 切换
+    document.getElementById('wrong-tabs').addEventListener('click',function(e){
+        const tab = e.target.closest('.wrong-tab');
+        if(!tab) return;
+        renderWrongPage(tab.dataset.tab);
+    });
 
-    // 错词本清空
+    // 错词本 — 复习按钮
+    document.getElementById('btn-wrong-review2').addEventListener('click',()=>startWrongReview('wrong-review'));
+    document.getElementById('btn-wrong-today-review').addEventListener('click',()=>startWrongReview('today-wrong'));
+    document.getElementById('btn-wrong-eb-review').addEventListener('click',()=>startWrongReview('ebbinghaus'));
+
+    // 错词本 — 清空
     document.getElementById('btn-wrong-clear').addEventListener('click',()=>{
         if(!confirm('确定清空全部错词？此操作不可撤销。')) return;
         state.wrong = {};
         saveState();
-        renderWrongList();
+        renderWrongPage();
     });
 
-    // 错词本过滤
+    // 错词本 — 过滤（仅总错词本）
     document.getElementById('wrong-filter').addEventListener('click',function(e){
         const chip = e.target.closest('.filter-chip');
         if(!chip) return;
-        const min = parseInt(chip.dataset.min);
-        renderWrongList(min);
+        wrongFilterMin = parseInt(chip.dataset.min);
+        renderWrongAll(Object.values(state.wrong));
     });
 
-    // 错词本点击查词
+    // 错词本 — 点击查词（委托到 #page-wrong）
     let wrongDetailWord = null;
-    document.getElementById('wrong-list').addEventListener('click',function(e){
+    document.getElementById('page-wrong').addEventListener('click',function(e){
         const wrap = e.target.closest('.wrong-item-wrap');
         if(!wrap) return;
-        // 如果点击的是删除区域，忽略（由 swipe 处理）
         if(e.target.closest('.wrong-swipe-del')) return;
         const en = wrap.dataset.en;
         const w = state.wrong[en];
@@ -7763,7 +8049,7 @@ function init(){
         wrongDetailWord = en;
         document.getElementById('wd-en').textContent = w.en;
         document.getElementById('wd-zh').textContent = w.zh;
-        document.getElementById('wd-count').textContent = w.count;
+        document.getElementById('wd-count').textContent = w.totalCount;
         document.getElementById('modal-wrong-detail').classList.add('show');
     });
 
@@ -7771,7 +8057,7 @@ function init(){
         if(wrongDetailWord && state.wrong[wrongDetailWord]){
             delete state.wrong[wrongDetailWord];
             saveState();
-            renderWrongList();
+            renderWrongPage();
         }
         document.getElementById('modal-wrong-detail').classList.remove('show');
         wrongDetailWord = null;
@@ -7782,7 +8068,7 @@ function init(){
         wrongDetailWord = null;
     });
 
-    // 错词本左滑删除
+    // 错词本 — 左滑删除（委托到 #page-wrong）
     let swipeTarget = null;
     let swipeStartX = 0;
     let swipeStartY = 0;
@@ -7796,7 +8082,7 @@ function init(){
         }
     }
 
-    document.getElementById('wrong-list').addEventListener('touchstart',function(e){
+    document.getElementById('page-wrong').addEventListener('touchstart',function(e){
         const wrap = e.target.closest('.wrong-item-wrap');
         if(!wrap) return;
         swipeTarget = wrap;
@@ -7804,18 +8090,17 @@ function init(){
         swipeStartY = e.touches[0].clientY;
     },{passive:true});
 
-    document.getElementById('wrong-list').addEventListener('touchmove',function(e){
+    document.getElementById('page-wrong').addEventListener('touchmove',function(e){
         if(!swipeTarget) return;
         const dx = e.touches[0].clientX - swipeStartX;
         const dy = e.touches[0].clientY - swipeStartY;
-        // only horizontal
         if(Math.abs(dx) > Math.abs(dy) && dx < 0){
             const inner = swipeTarget.querySelector('.wrong-item-inner');
             if(inner) inner.style.transform = `translateX(${Math.max(dx,-80)}px)`;
         }
     },{passive:true});
 
-    document.getElementById('wrong-list').addEventListener('touchend',function(e){
+    document.getElementById('page-wrong').addEventListener('touchend',function(e){
         if(!swipeTarget) return;
         const dx = e.changedTouches[0].clientX - swipeStartX;
         const inner = swipeTarget.querySelector('.wrong-item-inner');
@@ -7830,17 +8115,18 @@ function init(){
         swipeTarget = null;
     });
 
-    // 点击删除按钮
-    document.getElementById('wrong-list').addEventListener('click',function(e){
+    // 点击删除按钮（委托到 #page-wrong）
+    document.getElementById('page-wrong').addEventListener('click',function(e){
         const delBtn = e.target.closest('.wrong-swipe-del');
         if(!delBtn) return;
+        e.stopPropagation(); // 防止触发查词
         const wrap = delBtn.closest('.wrong-item-wrap');
         if(!wrap) return;
         const en = wrap.dataset.en;
         if(state.wrong[en]){
             delete state.wrong[en];
             saveState();
-            renderWrongList();
+            renderWrongPage();
         }
         swipeOpenWrap = null;
     });
@@ -7910,11 +8196,16 @@ function init(){
     // 完成弹窗按钮
     document.getElementById('btn-complete-restart').addEventListener('click',()=>{
         document.getElementById('modal-complete').classList.remove('show');
-        studyMode==='wrong-review' ? startWrongReview() : startNormalStudy(true);
+        if(studyMode==='normal'){
+            startNormalStudy(true);
+        } else {
+            startWrongReview(studyMode);
+        }
     });
     document.getElementById('btn-complete-wrong').addEventListener('click',()=>{
         document.getElementById('modal-complete').classList.remove('show');
-        if(Object.keys(state.wrong).length>0) startWrongReview();
+        const reviewable = Object.values(state.wrong).filter(w=>w.reviewCount > 0);
+        if(reviewable.length>0) startWrongReview('wrong-review');
         else navigate('home');
     });
     document.getElementById('btn-complete-home').addEventListener('click',()=>{
@@ -8040,19 +8331,22 @@ function init(){
     renderHome();
 }
 
-function startNormalStudy(reshuffle){
+function startNormalStudy(reshuffle, continueFrom){
     studyMode = 'normal';
-    if(reshuffle || state.order.length === 0){
+    if(reshuffle || state.order.length === 0 || state.index >= state.order.length){
         state.order = shuffle(state.words.map((_,i)=>i));
+        state.index = 0;
+    } else if(!continueFrom){
+        state.index = 0;
     }
-    state.index = 0;
+    // continueFrom=true: 保持当前 state.index，从上次位置继续
     state.roundResults = [];
     saveState();
     navigate('study');
 }
 
-function startWrongReview(){
-    studyMode = 'wrong-review';
+function startWrongReview(mode){
+    studyMode = mode || 'wrong-review';
     state.index = 0;
     state.roundResults = [];
     saveState();
